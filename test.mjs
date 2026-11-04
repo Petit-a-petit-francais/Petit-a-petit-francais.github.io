@@ -132,14 +132,15 @@ console.log(`ok — ${cached.length} offline files`);
 {
   const D = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: ["pres", "pc"], theme: "auto" };
   const c = Core.cleanState({
-    srs: { a: { r: 1, e: "2.5", x: "<img onerror=alert(1)>" }, b: "junk" },
+    srs: JSON.parse('{"a":{"r":1,"e":"2.5","x":"<img onerror=alert(1)>"},"b":"junk","__proto__":{"r":1}}'),
     log: { "2026-11-04": { n: "<b>1</b>", ok: 3 }, "<script>": { n: 1 } },
     lessons: { l1: 123, l2: "<i>" },
     settings: { newPerDay: "<svg>", sessionSize: 999, accent: "<x>", theme: "dark", tenses: ["pc", "<y>"], rate: 3, autoplay: "yes", voice: 5 },
   }, D, ["pres", "pc", "fut"]);
-  assert.equal(JSON.stringify(c.srs), '{"a":{"r":1,"e":2.5}}');
+  assert.equal(JSON.stringify(c.srs), '{"a":{"r":1,"i":0,"e":2.5,"l":0,"n":0,"d":0}}');
   assert.equal(JSON.stringify(c.log), '{"2026-11-04":{"n":0,"ok":3,"nw":0}}');
   assert.equal(JSON.stringify(c.lessons), '{"l1":123}');
+  assert.equal(c.srs.r, undefined, "__proto__ id must not change the prototype");
   assert.equal(JSON.stringify(c.settings), '{"newPerDay":15,"sessionSize":100,"voice":"","voiceQc":"","accent":"fr","rate":1.2,"autoplay":true,"tenses":["pc"],"theme":"dark"}');
   assert.equal(JSON.stringify(Core.cleanState({}, D, ["pres"]).settings.tenses), '["pres","pc"]');
 }

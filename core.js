@@ -262,11 +262,11 @@
     for (const [id, st] of Object.entries(obj(s.srs))) {
       const e = {};
       for (const [k, v] of Object.entries(obj(st))) if (/^[a-z]+$/.test(k) && Number.isFinite(+v) && v !== null) e[k] = +v;
-      if (Object.keys(e).length) srs[id] = e;
+      if (Object.keys(e).length && id !== "__proto__") srs[id] = { r: 0, i: 0, e: 2.5, l: 0, n: 0, d: 0, ...e };
     }
     for (const [day, d] of Object.entries(obj(s.log))) if (/^\d{4}-\d{2}-\d{2}$/.test(day))
       log[day] = { n: num(obj(d).n, 0, 1e6, 0), ok: num(obj(d).ok, 0, 1e6, 0), nw: num(obj(d).nw, 0, 1e6, 0) };
-    for (const [id, t] of Object.entries(obj(s.lessons))) if (Number.isFinite(+t) && t) lessons[id] = +t;
+    for (const [id, t] of Object.entries(obj(s.lessons))) if (Number.isFinite(+t) && t && id !== "__proto__") lessons[id] = +t;
     const st = obj(s.settings), D = defaults;
     const ts = Array.isArray(st.tenses) ? tenses.filter((t) => st.tenses.includes(t)) : [];
     return { srs, log, lessons, settings: {
@@ -278,5 +278,5 @@
     } };
   }
 
-  root.Core = { cleanState,  TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
+  root.Core = { cleanState, TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
 })(typeof window !== "undefined" ? window : globalThis);
