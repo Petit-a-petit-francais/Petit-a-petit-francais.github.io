@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Parsa Kamalipour
 // Network first so updates show up as soon as you're online; the cache is the offline fallback.
 // Bump CACHE when files are removed so old copies are dropped.
 const CACHE = "petit-a-petit-v2";

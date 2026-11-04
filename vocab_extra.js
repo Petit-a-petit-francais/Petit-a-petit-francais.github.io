@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Parsa Kamalipour. All rights reserved. Not covered by the GPL; see README.
 // More vocabulary, by theme.
 DATA.vocab.push(
   ["zéro","zero (0)","Les nombres"],

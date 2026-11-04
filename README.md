@@ -32,7 +32,7 @@ Checks the conjugation engine, grading, the scheduler, and that every sentence, 
 
 ## Licence
 
-The code (every file in this repo except the learning content, the logo and the third-party files listed below) is © 2026 Parsa Kamalipour, licensed under the [GNU General Public License v3.0 or later](LICENSE). You may use, study, change and share it, but if you distribute a modified version, you must release its source under the same licence.
+The code (every file in this repo except the learning content, the logo and the third-party files: `fonts/`, `licenses/` and the Lucide icon paths in `app.js`) is © 2026 Parsa Kamalipour, licensed under the [GNU General Public License v3.0 or later](LICENSE). You may use, study, change and share it, but if you distribute a modified version, you must release its source under the same licence.
 
 The learning content (the practice sentences, translations, grammar sheets, vocabulary lists and course structure in `data.js`, `grammar_extra.js` and `vocab_extra.js`) and the logo (`logo.svg`, `icons/`) are © 2026 Parsa Kamalipour, all rights reserved. They are not covered by the GPL and may not be copied or reused without permission.
 
