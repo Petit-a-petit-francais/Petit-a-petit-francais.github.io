@@ -229,7 +229,7 @@ DATA.cloze.push(
   ["y et en", "Maintenant, nous [n'y](negative + y) allons plus.", "Now we don't go there anymore."],
   ["y et en", "Elle se souvient de ses vacances. → Elle s'[en](en) souvient.", "She remembers her holiday. → She remembers it."],
   ["y et en", "Qu'est-ce que tu [en](en) penses ?", "What do you think about it?"],
-  ["y et en", "Tu n'en prends plus ? Tu [en](en) as assez ?", "You're not having any more? Have you had enough?"],
+  ["y et en", "Tu ne veux plus de soupe ? Tu [en](en) as assez ?", "You don't want any more soup? Have you had enough?"],
   ["y et en", "J'habite au Canada. J'[y](y) habite depuis 2020.", "I live in Canada. I've lived there since 2020."],
 
   // pronominaux
