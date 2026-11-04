@@ -254,5 +254,29 @@
   }
   const fillCloze = (s) => s.replace(/\[([^\]|]+)[^\]]*\](\([^)]+\))?/g, "$1");
 
-  root.Core = { TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
+  // Saved or imported progress is untrusted: keep only known keys, finite numbers and allowed values.
+  function cleanState(s, defaults, tenses) {
+    const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+    const num = (x, lo, hi, d) => (Number.isFinite(+x) && x !== null && x !== "" ? Math.min(hi, Math.max(lo, +x)) : d);
+    const srs = {}, log = {}, lessons = {};
+    for (const [id, st] of Object.entries(obj(s.srs))) {
+      const e = {};
+      for (const [k, v] of Object.entries(obj(st))) if (/^[a-z]+$/.test(k) && Number.isFinite(+v) && v !== null) e[k] = +v;
+      if (Object.keys(e).length) srs[id] = e;
+    }
+    for (const [day, d] of Object.entries(obj(s.log))) if (/^\d{4}-\d{2}-\d{2}$/.test(day))
+      log[day] = { n: num(obj(d).n, 0, 1e6, 0), ok: num(obj(d).ok, 0, 1e6, 0), nw: num(obj(d).nw, 0, 1e6, 0) };
+    for (const [id, t] of Object.entries(obj(s.lessons))) if (Number.isFinite(+t) && t) lessons[id] = +t;
+    const st = obj(s.settings), D = defaults;
+    const ts = Array.isArray(st.tenses) ? tenses.filter((t) => st.tenses.includes(t)) : [];
+    return { srs, log, lessons, settings: {
+      newPerDay: num(st.newPerDay, 0, 100, D.newPerDay), sessionSize: num(st.sessionSize, 5, 100, D.sessionSize),
+      voice: typeof st.voice === "string" ? st.voice : D.voice, voiceQc: typeof st.voiceQc === "string" ? st.voiceQc : D.voiceQc,
+      accent: ["fr", "qc"].includes(st.accent) ? st.accent : D.accent, rate: num(st.rate, 0.5, 1.2, D.rate),
+      autoplay: typeof st.autoplay === "boolean" ? st.autoplay : D.autoplay, tenses: ts.length ? ts : D.tenses,
+      theme: ["auto", "light", "dark"].includes(st.theme) ? st.theme : D.theme,
+    } };
+  }
+
+  root.Core = { cleanState,  TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
 })(typeof window !== "undefined" ? window : globalThis);

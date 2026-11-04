@@ -10,7 +10,7 @@
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && typeof s === "object") return { srs: s.srs || {}, log: s.log || {}, lessons: s.lessons || {}, settings: { ...DEFAULTS, ...s.settings } };
+      if (s && typeof s === "object") return Core.cleanState(s, DEFAULTS, TENSE_ORDER);
     } catch (e) { /* private mode or corrupt data: start fresh */ }
     return { srs: {}, log: {}, lessons: {}, settings: { ...DEFAULTS } };
   }
@@ -716,7 +716,7 @@
       try {
         const data = JSON.parse(await e.target.files[0].text());
         if (!data || typeof data.srs !== "object" || typeof data.log !== "object") throw new Error("shape");
-        S = { srs: data.srs, log: data.log, lessons: data.lessons || {}, settings: { ...DEFAULTS, ...data.settings } };
+        S = Core.cleanState(data, DEFAULTS, TENSE_ORDER);
         save();
         msg(`Imported ${Object.keys(S.srs).length} cards.`);
       } catch (err) {

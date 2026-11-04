@@ -127,3 +127,20 @@ const cached = JSON.parse(sw.match(/const APP = (\[[^\]]*\])/)[1]);
 for (const f of cached.filter((f) => f !== "./")) assert.ok(existsSync(here(f)), `sw.js caches missing file ${f}`);
 for (const i of JSON.parse(readFileSync(here("manifest.webmanifest"), "utf8")).icons) assert.ok(existsSync(here(i.src)), `manifest icon missing ${i.src}`);
 console.log(`ok — ${cached.length} offline files`);
+
+// saved/imported progress is untrusted: markup and bad values are dropped
+{
+  const D = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: ["pres", "pc"], theme: "auto" };
+  const c = Core.cleanState({
+    srs: { a: { r: 1, e: "2.5", x: "<img onerror=alert(1)>" }, b: "junk" },
+    log: { "2026-11-04": { n: "<b>1</b>", ok: 3 }, "<script>": { n: 1 } },
+    lessons: { l1: 123, l2: "<i>" },
+    settings: { newPerDay: "<svg>", sessionSize: 999, accent: "<x>", theme: "dark", tenses: ["pc", "<y>"], rate: 3, autoplay: "yes", voice: 5 },
+  }, D, ["pres", "pc", "fut"]);
+  assert.equal(JSON.stringify(c.srs), '{"a":{"r":1,"e":2.5}}');
+  assert.equal(JSON.stringify(c.log), '{"2026-11-04":{"n":0,"ok":3,"nw":0}}');
+  assert.equal(JSON.stringify(c.lessons), '{"l1":123}');
+  assert.equal(JSON.stringify(c.settings), '{"newPerDay":15,"sessionSize":100,"voice":"","voiceQc":"","accent":"fr","rate":1.2,"autoplay":true,"tenses":["pc"],"theme":"dark"}');
+  assert.equal(JSON.stringify(Core.cleanState({}, D, ["pres"]).settings.tenses), '["pres","pc"]');
+}
+console.log("ok — progress validation");
