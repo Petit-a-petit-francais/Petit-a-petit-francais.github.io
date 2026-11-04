@@ -1,4 +1,4 @@
-// Vocabulary from the A1 and A2 class notes not covered in data.js.
+// More vocabulary, by theme.
 DATA.vocab.push(
   ["zéro","zero (0)","Les nombres"],
   ["un","one (1)","Les nombres"],
@@ -1185,7 +1185,7 @@ DATA.vocab.push(
   ["casse-toi","get lost (vulgar)","Familier et argot"]
 );
 
-// Vocabulary from "Vocabulaire progressif du français" (index) and the vocab cheatsheet.
+// More vocabulary.
 DATA.vocab.push(
   ["l'Afrique","Africa (f)","Pays et nationalités"],
   ["l'Asie","Asia (f)","Pays et nationalités"],
@@ -2038,7 +2038,7 @@ DATA.vocab.push(
   ["bouffer","to eat (slang)","Familier et argot"]
 );
 
-// Remaining words from the notes and the book index that the two batches above missed.
+// More vocabulary.
 DATA.vocab.push(
   ["les arêtes", "fish bones", "Commerces et nourriture"], ["le chant des oiseaux", "birdsong", "La nature"],   ["le sommet", "summit, peak", "La nature"],
   ["une feuille blanche", "a blank sheet of paper", "Les objets"],   ["un cours intensif", "an intensive course", "L'école et la langue"], ["compter", "to count", "Les nombres"],
@@ -2094,7 +2094,7 @@ DATA.vocab.push(
   ["les Pyrénées", "the Pyrenees", "Pays et nationalités"], ["Mayotte", "Mayotte", "Pays et nationalités"], ["les DOM-TOM", "French overseas territories", "Pays et nationalités"],
 );
 
-// Le Nouveau Taxi 1 — lexique multilingue (words not covered above).
+// More vocabulary.
 DATA.vocab.push(
   ["l'activité", "activity (f)", "Les loisirs"], ["l'agence de voyages", "travel agency (f)", "Le tourisme"], ["ah bon ?", "really?", "Expressions"],
   ["l'air conditionné", "air conditioning (m)", "Logement et ville"], ["l'album", "album (m)", "Les arts et les médias"], ["l'an", "year (m)", "Le temps"],
@@ -2145,7 +2145,7 @@ DATA.vocab.push(
   ["vivement…", "I can't wait for…", "Expressions"], ["le volley-ball", "volleyball", "Les loisirs"],
 );
 
-// Le Nouveau Taxi 2 — vocabulaire thématique (p. 107–109), words not covered above.
+// More vocabulary.
 DATA.vocab.push(
   ["la gastronomie", "gastronomy, fine food", "Commerces et nourriture"], ["méchant", "mean, nasty", "Les adjectifs"], ["la jeunesse", "youth", "Famille et état civil"],
   ["particulier", "particular, private (f: particulière)", "Les adjectifs"], ["la science", "science", "L'école et la langue"], ["passionnant", "exciting, fascinating", "Les adjectifs"],
@@ -2197,7 +2197,7 @@ DATA.vocab.push(
   ["la solitude", "loneliness, solitude", "Les émotions"], ["la population", "population", "Logement et ville"], ["le moyen de transport", "means of transport", "Les transports"],
   ["le désir", "desire", "Les émotions"], );
 
-// Vocabulaire progressif — chapter-by-chapter pass (words on the lesson pages not covered above).
+// More vocabulary.
 DATA.vocab.push(
   // 1 Les usages – la politesse
   ["les félicitations", "congratulations", "Expressions"], ["impoli", "rude, impolite", "Les adjectifs"],
@@ -2330,7 +2330,7 @@ DATA.vocab.push(
   ["international", "international (m pl: internationaux)", "Les adjectifs"],
 );
 
-// A2 session 15 — familiar shortened words.
+// Familiar shortened words.
 DATA.vocab.push(
   ["les ados", "teens (familiar: adolescents)", "Familier et argot"], ["le resto", "restaurant (familiar)", "Familier et argot"],
   ["l'appart", "apartment (familiar: appartement) (m)", "Familier et argot"], ["l'expo", "exhibition (familiar: exposition) (f)", "Familier et argot"], ["l'unif", "university (familiar, Belgium) (f)", "Familier et argot"],
@@ -2339,7 +2339,7 @@ DATA.vocab.push(
   ["gérer son temps", "to manage one's time", "Le travail"],
 );
 
-// A1/A2 notes — page-by-page pass (words that appear on note pages but weren't covered).
+// More vocabulary.
 DATA.vocab.push(
   // grammar words your teacher uses
   ["le pronom", "pronoun", "L'école et la langue"], ["l'auxiliaire", "auxiliary verb (m)", "L'école et la langue"], ["la voyelle", "vowel", "L'école et la langue"],
@@ -2456,7 +2456,7 @@ DATA.vocab.push(
   ["le Taureau", "Taurus", "Les loisirs"], ["les Gémeaux", "Gemini", "Les loisirs"], ["le wagon", "carriage (train)", "Les transports"],
 );
 
-// A1/A2 notes — second page-by-page pass.
+// More vocabulary.
 DATA.vocab.push(
   ["l'ambiance", "atmosphere, vibe (f)", "Les émotions"], ["l'aventure", "adventure (f)", "Les loisirs"], ["le banquet", "banquet", "Les loisirs"],
   ["le bâton", "stick", "Les objets"], ["bas", "low (f: basse)", "Les adjectifs"], ["le canal", "canal; channel (m pl: canaux)", "Logement et ville"],
@@ -2473,7 +2473,7 @@ DATA.vocab.push(
   ["le chemin de fer", "railway", "Les transports"],   ["les heures d'ouverture", "opening hours", "Le temps"], ["l'heure de pointe", "rush hour (f)", "Les transports"],
 );
 
-// A1/A2 notes — final page-by-page pass.
+// More vocabulary.
 DATA.vocab.push(
   ["interrogatif", "interrogative (f: interrogative)", "L'école et la langue"], ["l'interrogation", "question form (f)", "L'école et la langue"], ["réfléchi", "reflexive (grammar); thoughtful", "L'école et la langue"],
   ["partitif", "partitive", "L'école et la langue"], ["défini", "definite (article)", "L'école et la langue"], ["indéfini", "indefinite (article)", "L'école et la langue"],

@@ -62,7 +62,7 @@
   const NEW_ORDER = Core.interleave(ITEMS, (it) => it.type);
 
   const GRAMMAR_TOPICS = [...new Set(DATA.cloze.map((c) => c[0]))];
-  const topicName = (t) => (t === "examen" ? "MOMO final exam" : t[0].toUpperCase() + t.slice(1));
+  const topicName = (t) => (t === "examen" ? "Present tense test" : t[0].toUpperCase() + t.slice(1));
   const THEMES = [...new Set(DATA.vocab.map((w) => w[2]))];
   const FICHE = Object.fromEntries(DATA.fiches.map((f) => [f.id, f]));
   const TENSE_FICHE = { pres: "present", pc: "pc", fp: "proche", pr: "proche", impe: "impe", imp: "imp", fut: "fut", cond: "fut" };
@@ -685,7 +685,7 @@
       <h2>Appearance</h2>
       <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
       <h2>Your data</h2>
-      <div class="card"><p class="muted small">Progress is saved in this browser only. Export a backup now and then so clearing browser data doesn't erase it.</p>
+      <div class="card"><p class="muted small">Progress is saved in this browser only. Export a backup now and then so clearing browser data doesn't erase it. <a href="privacy.html">Privacy policy</a></p>
         <p style="display:flex;gap:8px;flex-wrap:wrap;margin:0"><button class="btn" type="button" id="export">Export progress</button>
         <label class="btn" for="import">Import progress</label><input type="file" id="import" accept="application/json" hidden>
         <button class="btn ghost" type="button" id="reset" style="color:var(--danger)">Erase all progress</button></p>
@@ -700,7 +700,7 @@
       set("tenses", ts);
     }));
     for (const id of ["voice", "voiceQc", "accent"]) document.getElementById(id).onchange = (e) => set(id, e.target.value);
-    main.querySelectorAll("[data-test]").forEach((b) => (b.onclick = () => speak(b.dataset.test === "qc" ? "Bonjour ! Je m'appelle Momo et je reste à Montréal depuis deux ans." : "Bonjour ! Je m'appelle Momo et j'habite à Paris.", undefined, b.dataset.test)));
+    main.querySelectorAll("[data-test]").forEach((b) => (b.onclick = () => speak(b.dataset.test === "qc" ? "Bonjour ! Je m'appelle Léa et je reste à Montréal depuis deux ans." : "Bonjour ! Je m'appelle Léa et j'habite à Paris.", undefined, b.dataset.test)));
     document.getElementById("rate").onchange = (e) => set("rate", +e.target.value);
     document.getElementById("autoplay").onchange = (e) => set("autoplay", e.target.checked);
     document.getElementById("theme").onchange = (e) => { set("theme", e.target.value); applyTheme(); };

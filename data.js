@@ -1,9 +1,9 @@
-// Content built from the files in ~/Downloads/French (Conjugaison/Grammaire avec MOMO, FrenchMoMo A1 notes, A2 sessions 1–14, Taxi 1–2).
+// Content for Petit à petit français: verbs, practice sentences, vocabulary, grammar sheets.
 // Verb row: [infinitive, english, "présent je tu il nous vous ils" (a|b = both accepted), participe passé, aux a/e, futur stem (if irregular), imparfait stem (if irregular)]
 window.DATA = {};
 
 DATA.verbs = [
-  // MOMO conjugation series, in podcast order
+  // core verbs, most frequent first
   ["parler", "to speak", "parle parles parle parlons parlez parlent", "parlé", "a"],
   ["aimer", "to like / love", "aime aimes aime aimons aimez aiment", "aimé", "a"],
   ["adorer", "to adore", "adore adores adore adorons adorez adorent", "adoré", "a"],
@@ -54,7 +54,7 @@ DATA.verbs = [
   ["se promener", "to go for a walk", "promène promènes promène promenons promenez promènent", "promené", "e", "promèner"],
   ["s'occuper", "to take care (of)", "occupe occupes occupe occupons occupez occupent", "occupé", "e"],
   ["s'appeler", "to be called", "appelle appelles appelle appelons appelez appellent", "appelé", "e", "appeller"],
-  // other verbs from the A1/A2 class notes and Taxi
+  // other common verbs
   ["dire", "to say", "dis dis dit disons dites disent", "dit", "a"],
   ["manger", "to eat", "mange manges mange mangeons mangez mangent", "mangé", "a"],
   ["commencer", "to begin", "commence commences commence commençons commencez commencent", "commencé", "a"],
@@ -85,64 +85,64 @@ DATA.verbs = [
 
 // Cloze rows: [topic, sentence with [answer|alt](hint), english, optional instruction]
 DATA.cloze = [
-  // Conjugaison avec MOMO — examen final (présent)
-  ["examen", "Je [parle](parler) français quand je [suis](être) en France.", "I speak French when I'm in France."],
-  ["examen", "Tu [travailles](travailler) ici quand tu [habites](habiter) seul.", "You work here when you live alone."],
-  ["examen", "Elle [n'a pas](ne pas avoir) de temps parce que vous [n'aidez pas](ne pas aider).", "She has no time because you don't help."],
-  ["examen", "Nous [sommes](être) à la maison où les enfants [peuvent](pouvoir) jouer.", "We're at the house where the children can play."],
-  ["examen", "Qui [connaît|connait](connaître) ce monsieur à qui je [donne](donner) cours de français ?", "Who knows this gentleman I teach French to?"],
-  ["examen", "Tu [dois](devoir) être sûr qu'elle [ne trouve pas](ne pas trouver) le cadeau.", "You must be sure she doesn't find the gift."],
-  ["examen", "Vous [buvez](boire) trop d'alcool et cela [n'est pas](ne pas être) bon pour la santé.", "You drink too much alcohol and that's not good for your health."],
-  ["examen", "Elles [veulent](vouloir) voir la robe que tu [mets](mettre) ce soir.", "They want to see the dress you're wearing tonight."],
-  ["examen", "Je [pense](penser) qu'il [faut](falloir) rentrer à la maison.", "I think we have to go home."],
-  ["examen", "Moi et mes amis, nous [sortons](sortir) en boîte où on [peut](pouvoir) danser toute la nuit.", "My friends and I go clubbing where we can dance all night."],
-  ["examen", "Vous [ne voyez pas](ne pas voir) ce que je [veux](vouloir) dire.", "You don't see what I mean."],
-  ["examen", "Tout le monde [sait](savoir) que tu [ne connais pas](ne pas connaître) cet acteur.", "Everyone knows you don't know this actor."],
-  ["examen", "Mon professeur [sait](savoir) bien ce que nous [devons](devoir) faire.", "My teacher knows well what we must do."],
-  ["examen", "Elles [ne font pas](ne pas faire) ce travail parce qu'elles [sont](être) fatiguées.", "They don't do this work because they're tired."],
-  ["examen", "Je [prends](prendre) mon déjeuner où tu [dînes](dîner) ce soir.", "I have lunch where you're having dinner tonight."],
-  ["examen", "Elle [n'apprend pas](ne pas apprendre) les leçons que j'[enseigne](enseigner).", "She doesn't learn the lessons I teach."],
-  ["examen", "Vous [entendez](entendre) ce bruit qui [embête](embêter) tout le monde ?", "Do you hear that noise bothering everyone?"],
-  ["examen", "Nous [répondons](répondre) aux questions que les élèves nous [posent](poser).", "We answer the questions the students ask us."],
-  ["examen", "Ils [ne comprennent pas](ne pas comprendre) du tout ce que tu [as](avoir) envie de dire.", "They don't understand at all what you want to say."],
-  ["examen", "Elles [écrivent](écrire) sur le cahier que je [vends](vendre) au magasin.", "They write in the notebook I sell at the shop."],
-  ["examen", "Tu [ne lis pas](ne pas lire) les messages qu'elle [envoie](envoyer).", "You don't read the messages she sends."],
-  ["examen", "Nous [nous réveillons](se réveiller) et après nous [nous habillons](s'habiller).", "We wake up and then we get dressed."],
-  ["examen", "Ils [ne se douchent pas](ne pas se doucher) dans cet hôtel où tu [te couches](se coucher).", "They don't shower in this hotel where you sleep."],
-  ["examen", "Tout le monde [se méfie](se méfier) de ce que vous [faites](faire).", "Everyone is suspicious of what you do."],
-  ["examen", "On [ne doit pas](ne pas devoir) écouter les histoires qu'elle [raconte](raconter).", "We mustn't listen to the stories she tells."],
+  // present tense test
+  ["examen", "Je [travaille](travailler) le matin et je [lis](lire) le soir.", "I work in the morning and read in the evening."],
+  ["examen", "Tu [chantes](chanter) bien quand tu [es](être) content.", "You sing well when you're happy."],
+  ["examen", "Il [n'a pas](ne pas avoir) faim parce qu'il [mange](manger) beaucoup à midi.", "He isn't hungry because he eats a lot at lunchtime."],
+  ["examen", "Nous [allons](aller) au parc où nos chiens [peuvent](pouvoir) courir.", "We go to the park where our dogs can run."],
+  ["examen", "Qui [connaît|connait](connaître) la femme qui [habite](habiter) en face ?", "Who knows the woman who lives opposite?"],
+  ["examen", "Vous [devez](devoir) partir tôt si vous [ne voulez pas](ne pas vouloir) rater le bus.", "You must leave early if you don't want to miss the bus."],
+  ["examen", "Tu [bois](boire) du café le soir et tu [ne dors pas](ne pas dormir) bien.", "You drink coffee in the evening and you don't sleep well."],
+  ["examen", "Elles [veulent](vouloir) savoir où tu [mets](mettre) les clés.", "They want to know where you put the keys."],
+  ["examen", "Je [crois](croire) qu'il [pleut](pleuvoir) encore dehors.", "I think it's still raining outside."],
+  ["examen", "Mes cousins et moi, nous [sortons](sortir) le samedi et nous [rentrons](rentrer) tard.", "My cousins and I go out on Saturdays and come home late."],
+  ["examen", "Vous [ne comprenez pas](ne pas comprendre) pourquoi je [ris](rire).", "You don't understand why I'm laughing."],
+  ["examen", "Tout le monde [sait](savoir) que ce restaurant [ferme](fermer) le lundi.", "Everyone knows this restaurant closes on Mondays."],
+  ["examen", "Notre voisine [connaît|connait](connaître) bien la ville où nous [vivons](vivre).", "Our neighbour knows the town we live in well."],
+  ["examen", "Ils [ne finissent pas](ne pas finir) leurs devoirs parce qu'ils [jouent](jouer) dehors.", "They don't finish their homework because they play outside."],
+  ["examen", "Je [prends](prendre) le métro quand tu [viens](venir) en voiture.", "I take the metro when you come by car."],
+  ["examen", "Elle [n'écoute pas](ne pas écouter) la musique que son frère [aime](aimer).", "She doesn't listen to the music her brother likes."],
+  ["examen", "Vous [voyez](voir) ce chat qui [dort](dormir) sur le toit ?", "Do you see that cat sleeping on the roof?"],
+  ["examen", "Nous [attendons](attendre) le colis que la poste nous [envoie](envoyer).", "We're waiting for the parcel the post office is sending us."],
+  ["examen", "Ils [ne reçoivent pas](ne pas recevoir) les lettres que tu leur [écris](écrire).", "They don't get the letters you write to them."],
+  ["examen", "Elles [achètent](acheter) les fruits que le marchand [vend](vendre) au marché.", "They buy the fruit the stallholder sells at the market."],
+  ["examen", "Tu [ne réponds pas](ne pas répondre) quand ta mère t'[appelle](appeler).", "You don't answer when your mother calls you."],
+  ["examen", "Je [me lève](se lever) à sept heures et ensuite je [me brosse](se brosser) les dents.", "I get up at seven and then brush my teeth."],
+  ["examen", "Vous [ne vous reposez pas](ne pas se reposer) assez et vous [vous couchez](se coucher) trop tard.", "You don't rest enough and you go to bed too late."],
+  ["examen", "Les enfants [s'amusent](s'amuser) pendant que leurs parents [font](faire) les courses.", "The children have fun while their parents do the shopping."],
+  ["examen", "On [ne doit pas](ne pas devoir) croire tout ce qu'on [lit](lire) sur Internet.", "We mustn't believe everything we read online."],
 
-  // présent — example sentences from the MOMO episodes
+  // présent
   ["présent", "Je [parle](parler) un peu espagnol.", "I speak a little Spanish."],
-  ["présent", "Et vous, quelle langue est-ce que vous [parlez](parler) ?", "And you, what language do you speak?"],
+  ["présent", "Et toi, quel sport est-ce que tu [pratiques](pratiquer) ?", "And you, what sport do you do?"],
   ["présent", "Ils [aiment](aimer) leurs enfants.", "They love their children."],
   ["présent", "Ils [adorent](adorer) faire la cuisine.", "They love cooking."],
   ["présent", "Vous [habitez](habiter) où ?", "Where do you live?"],
   ["présent", "J'[ai](avoir) mal à la tête.", "I have a headache."],
   ["présent", "Tu [as](avoir) quel âge ?", "How old are you?"],
   ["présent", "Elles [ont](avoir) chaud.", "They are hot."],
-  ["présent", "Je [vais](aller) chez mon ami tous les week-ends.", "I go to my friend's every weekend."],
+  ["présent", "Je [vais](aller) chez ma grand-mère tous les dimanches.", "I go to my grandmother's every Sunday."],
   ["présent", "Vous [allez](aller) au travail en métro.", "You go to work by metro."],
   ["présent", "Isabelle ne [vient](venir) pas ce soir.", "Isabelle isn't coming tonight."],
   ["présent", "Nous [venons](venir) d'Iran.", "We come from Iran."],
   ["présent", "Nous [faisons](faire) les courses tous les dimanches.", "We do the shopping every Sunday."],
-  ["présent", "Vous ne [faites](faire) pas la cuisine ce soir.", "You're not cooking tonight."],
+  ["présent", "Vous ne [faites](faire) pas la vaisselle après le dîner ?", "Don't you do the dishes after dinner?"],
   ["présent", "Ils [écrivent](écrire) leurs prénoms au tableau.", "They write their first names on the board."],
   ["présent", "Le soir, nous [lisons](lire) un roman.", "In the evening, we read a novel."],
   ["présent", "Il [prend](prendre) des médicaments depuis une semaine.", "He's been taking medicine for a week."],
-  ["présent", "Vous [apprenez](apprendre) le français depuis combien de temps ?", "How long have you been learning French?"],
+  ["présent", "Vous [apprenez](apprendre) le piano depuis quand ?", "Since when have you been learning the piano?"],
   ["présent", "Je ne [comprends](comprendre) pas.", "I don't understand."],
-  ["présent", "Je [vois](voir) mes collègues tous les jours au travail.", "I see my colleagues every day at work."],
-  ["présent", "Le train 285 à destination de Paris [part](partir) dans 15 minutes.", "Train 285 to Paris leaves in 15 minutes."],
-  ["présent", "Vous [sortez](sortir) les poubelles tous les soirs à 9h.", "You take the trash out every evening at 9."],
+  ["présent", "Je [vois](voir) mes cousins une fois par mois.", "I see my cousins once a month."],
+  ["présent", "Le bus pour l'aéroport [part](partir) toutes les vingt minutes.", "The airport bus leaves every twenty minutes."],
+  ["présent", "Vous [sortez](sortir) le chien avant le petit-déjeuner.", "You take the dog out before breakfast."],
   ["présent", "Est-ce que vous [connaissez](connaître) cette actrice ?", "Do you know this actress?"],
   ["présent", "Nous [voulons](vouloir) apprendre le français.", "We want to learn French."],
-  ["présent", "Elles [doivent](devoir) rentrer à la maison avant 9h du soir.", "They must be home before 9 pm."],
+  ["présent", "Elles [doivent](devoir) finir ce projet avant vendredi.", "They have to finish this project before Friday."],
   ["présent", "Ma mère [sait](savoir) conduire.", "My mother knows how to drive."],
-  ["présent", "Ils ne [savent](savoir) pas pourquoi le bébé n'arrête pas de pleurer.", "They don't know why the baby won't stop crying."],
+  ["présent", "Ils ne [savent](savoir) pas où ils ont garé la voiture.", "They don't know where they parked the car."],
   ["présent", "Vous [buvez](boire) du thé tous les matins.", "You drink tea every morning."],
   ["présent", "Les musulmans ne [boivent](boire) pas d'alcool.", "Muslims don't drink alcohol."],
-  ["présent", "Mon collègue [met](mettre) tout le temps ses pieds sur la table.", "My colleague always puts his feet on the table."],
+  ["présent", "Ma sœur [met](mettre) toujours trop de sel dans la soupe.", "My sister always puts too much salt in the soup."],
   ["présent", "J'[attends](attendre) le bus tous les jours.", "I wait for the bus every day."],
   ["présent", "Est-ce que tu [entends](entendre) ce bruit ?", "Do you hear that noise?"],
   ["présent", "Est-ce que vous [vendez](vendre) des boissons alcoolisées ?", "Do you sell alcoholic drinks?"],
@@ -162,7 +162,7 @@ DATA.cloze = [
   ["présent", "Tu [achètes](acheter) du pain ?", "Are you buying bread?"],
   ["présent", "Je [paie|paye](payer) par carte.", "I pay by card."],
 
-  // passé récent / futur proche — Grammaire avec MOMO 1–2
+  // passé récent / futur proche
   ["venir de / aller", "Je [viens de](passé récent) parler à ma mère.", "I just spoke to my mother."],
   ["venir de / aller", "Le métro [vient de](passé récent) partir.", "The metro just left."],
   ["venir de / aller", "Je [viens de me](passé récent) réveiller.", "I just woke up."],
@@ -187,20 +187,20 @@ DATA.cloze = [
   ["passé composé", "Elle [s'est maquillée](se maquiller) avant la fête.", "She put on make-up before the party."],
   ["passé composé", "Vous [avez vu](voir) ce film ?", "Have you seen this film?"],
   ["passé composé", "Elle [est née](naître) le 15 juin 1989.", "She was born on 15 June 1989."],
-  ["passé composé", "J'[ai cassé](casser) mes lunettes de soleil cet été.", "I broke my sunglasses this summer."],
+  ["passé composé", "J'[ai cassé](casser) une assiette en faisant la vaisselle.", "I broke a plate while doing the dishes."],
   ["passé composé", "Tu m'[as manqué|as manquée](manquer).", "I missed you."],
   ["passé composé", "Est-ce que ça t'[a plu](plaire) ?", "Did you like it?"],
   ["passé composé", "Ils [ne sont pas venus](ne pas venir) hier soir.", "They didn't come last night."],
   ["passé composé", "Nous [avons bu](boire) un verre ensemble.", "We had a drink together."],
-  ["passé composé", "Cette année, je [suis allé|suis allée](aller) aux États-Unis.", "This year I went to the United States."],
+  ["passé composé", "L'hiver dernier, je [suis allé|suis allée](aller) en Norvège.", "Last winter I went to Norway."],
   ["passé composé", "Elles [sont restées](rester) à la maison.", "They stayed home."],
   ["passé composé", "J'[ai lu](lire) le livre que tu m'as offert.", "I read the book you gave me."],
   ["passé composé", "On [a dû](devoir) partir tôt.", "We had to leave early."],
 
-  // imparfait / futur simple / conditionnel — A2 session 14
+  // imparfait / futur simple / conditionnel
   ["imparfait", "Quand j'étais petit, je [jouais](jouer) au football.", "When I was little, I played football."],
   ["imparfait", "Avant, nous [habitions](habiter) à Téhéran.", "Before, we lived in Tehran."],
-  ["imparfait", "Il y a un boulanger qui [allait](aller) à l'école avec Max.", "There's a baker who went to school with Max."],
+  ["imparfait", "C'est le facteur qui [apportait](apporter) le journal chaque matin.", "That's the postman who brought the newspaper every morning."],
   ["imparfait", "Tu [étais](être) fatigué hier soir.", "You were tired last night."],
   ["imparfait", "Elles [faisaient](faire) la cuisine tous les dimanches.", "They used to cook every Sunday."],
   ["imparfait", "Il [fallait](falloir) partir tôt.", "We had to leave early."],
@@ -223,7 +223,7 @@ DATA.cloze = [
   ["conditionnel", "Vous [feriez](faire) quoi à ma place ?", "What would you do in my place?"],
   ["conditionnel", "J'[irais](aller) avec toi, mais je suis malade.", "I'd go with you, but I'm sick."],
 
-  // impératif — Grammaire avec MOMO 4 + L'impératif exercices
+  // impératif
   ["impératif", "[Parlez](parler, vous) plus fort, s'il vous plaît.", "Speak louder, please."],
   ["impératif", "[Parlons](parler, nous) d'un autre sujet.", "Let's talk about something else."],
   ["impératif", "[Allons](aller, nous)-y !", "Let's go!"],
@@ -238,12 +238,12 @@ DATA.cloze = [
   ["impératif", "[Mange](manger, tu) tes légumes !", "Eat your vegetables!"],
   ["impératif", "[Attendez](attendre, vous), s'il vous plaît !", "Wait, please!"],
   ["impératif", "[Sors](sortir, tu) de ma chambre !", "Get out of my room!"],
-  ["impératif", "[Mets](mettre, tu) ta petite robe rouge pour ce soir.", "Wear your little red dress tonight."],
+  ["impératif", "[Mets](mettre, tu) ton manteau, il fait froid dehors.", "Put your coat on, it's cold outside."],
   ["impératif", "[Descends](descendre, tu) ! Je suis là.", "Come down! I'm here."],
   ["impératif", "[Lève](se lever, tu)-toi, il est tard !", "Get up, it's late!"],
   ["impératif", "[Habillez](s'habiller, vous)-vous vite !", "Get dressed quickly!"],
 
-  // questions — Grammaire avec MOMO 3, A2 sessions 2–3
+  // questions
   ["questions", "[Où habitez-vous ?]", "Where do you live?", "Formel (inversion) : « Vous habitez où ? »"],
   ["questions", "[Où est-ce que vous habitez ?]", "Where do you live?", "Standard (est-ce que) : « Vous habitez où ? »"],
   ["questions", "[Parlez-vous français ?]", "Do you speak French?", "Formel (inversion) : « Vous parlez français ? »"],
@@ -256,7 +256,7 @@ DATA.cloze = [
   ["questions", "[Pourquoi apprenez-vous le français ?]", "Why are you learning French?", "Formel (inversion) : « Pourquoi vous apprenez le français ? »"],
   ["questions", "[Où va-t-elle après les cours ?]", "Where does she go after class?", "Formel (inversion) : « Elle va où après les cours ? »"],
   ["questions", "[Comment s'appelle-t-il ?]", "What's his name?", "Formel (inversion) : « Il s'appelle comment ? »"],
-  ["questions", "[Qu'est-ce que tu étudies à la fac ?]", "What do you study at university?", "Standard (est-ce que) : « Tu étudies quoi à la fac ? »"],
+  ["questions", "[Qu'est-ce que tu regardes à la télé ?]", "What are you watching on TV?", "Standard (est-ce que) : « Tu regardes quoi à la télé ? »"],
   ["questions", "[Quel train prends-tu le matin ?]", "Which train do you take in the morning?", "Formel (inversion) : « Tu prends quel train le matin ? »"],
   ["questions", "[Commence-t-elle à 10h ?]", "Does it start at 10?", "Formel (inversion) : « Elle commence à 10h ? »"],
   ["questions", "[Puis-je vous aider ?]", "May I help you?", "Formel (inversion) : « Je peux vous aider ? »"],
@@ -269,21 +269,21 @@ DATA.cloze = [
   ["questions", "[Pourquoi](why) es-tu triste ?", "Why are you sad?"],
   ["questions", "Tu fais [quoi](what) ce soir ?", "What are you doing tonight?"],
 
-  // relatifs qui / que / où — A2 session 9–10
-  ["relatifs", "Je connais mon voisin [qui](relatif) est un bon mécanicien.", "I know my neighbour who is a good mechanic."],
+  // relatifs qui / que / où
+  ["relatifs", "J'ai une amie [qui](relatif) parle quatre langues.", "I have a friend who speaks four languages."],
   ["relatifs", "Elle adore la maison [que](relatif) vous venez d'acheter.", "She loves the house you just bought."],
-  ["relatifs", "Je déteste mon collègue [qui](relatif) est vraiment raciste.", "I hate my colleague who is really racist."],
-  ["relatifs", "Il y a Franck et Olivia [que](relatif) tu connais.", "There are Franck and Olivia, whom you know."],
+  ["relatifs", "Je n'aime pas les films [qui](relatif) finissent mal.", "I don't like films that end badly."],
+  ["relatifs", "Voici le livre [que](relatif) tu m'as prêté.", "Here's the book you lent me."],
   ["relatifs", "Fabrice travaille dans un salon [qui](relatif) s'appelle Créatifs.", "Fabrice works in a salon called Créatifs."],
   ["relatifs", "Aline a acheté un appartement [qu'](relatif)elle adore.", "Aline bought an apartment she loves."],
   ["relatifs", "Nous sommes à la maison [où](relatif) les enfants peuvent jouer.", "We're at the house where the children can play."],
-  ["relatifs", "Lucie, c'est une fille [que](relatif) je connais bien.", "Lucie is a girl I know well."],
+  ["relatifs", "Paul, c'est un collègue [que](relatif) j'apprécie beaucoup.", "Paul is a colleague I really like."],
   ["relatifs", "Tania, c'est une fille [qui](relatif) est photographe.", "Tania is a girl who's a photographer."],
   ["relatifs", "C'est la ville [où](relatif) je suis né.", "It's the city where I was born."],
   ["relatifs", "Malik, c'est un garçon [que](relatif) les études intéressent.", "Malik is a boy who is interested in studies."],
   ["relatifs", "Le film [dont](relatif) je te parle est excellent.", "The film I'm telling you about is excellent."],
 
-  // démonstratifs — A2 session 10–13
+  // démonstratifs
   ["démonstratifs", "Je préfère [celui](pronom démonstratif) qui est italien. (le restaurant)", "I prefer the one that's Italian."],
   ["démonstratifs", "Elle va acheter [celle](pronom démonstratif) dans la vitrine. (la chemise)", "She's going to buy the one in the window."],
   ["démonstratifs", "Je vais apporter [ceux](pronom démonstratif) en noir. (les vêtements)", "I'm going to bring the black ones."],
@@ -324,7 +324,7 @@ DATA.cloze = [
   ["articles", "Ils viennent [du](de + le) Canada.", "They come from Canada."],
   ["articles", "Je voudrais un peu [de](quantité) sel.", "I'd like a little salt."],
 
-  // prépositions + lieux — MOMO 4, A2 session 6–7
+  // prépositions + lieux
   ["prépositions", "J'habite [à](ville) Téhéran.", "I live in Tehran."],
   ["prépositions", "J'habite [en](pays) France.", "I live in France."],
   ["prépositions", "J'habite [au](pays) Canada.", "I live in Canada."],
@@ -342,17 +342,17 @@ DATA.cloze = [
   ["prépositions", "Je viens [d'](pays)Iran.", "I come from Iran."],
   ["prépositions", "Il vient [du](pays) Brésil.", "He comes from Brazil."],
 
-  // tout / toute / tous / toutes — A2 session 4–6
+  // tout / toute / tous / toutes
   ["tout", "Je travaille [tous](tout) les jours.", "I work every day."],
   ["tout", "Elle écoute l'album [toute](tout) la journée.", "She listens to the album all day."],
   ["tout", "[Tout](tout) le monde est amoureux d'elle.", "Everyone is in love with her."],
   ["tout", "J'ai écouté [toutes](tout) les chansons.", "I listened to all the songs."],
   ["tout", "Il ferme [toutes](tout) les fenêtres.", "He closes all the windows."],
   ["tout", "J'adore [tous](tout) ses films.", "I love all her films."],
-  ["tout", "Elles sont [toutes](tout) les trois fans de Charlotte.", "All three of them are fans of Charlotte."],
+  ["tout", "Elles sont [toutes](tout) les deux étudiantes en médecine.", "Both of them are medical students."],
   ["tout", "Je ne comprends pas du [tout](tout).", "I don't understand at all."],
 
-  // pronoms toniques — A2 session 7
+  // pronoms toniques
   ["pronoms toniques", "Non, [lui](il), il travaille au Portugal.", "No, he works in Portugal."],
   ["pronoms toniques", "Non, [moi](je), je vais en Grèce.", "No, I'm going to Greece."],
   ["pronoms toniques", "Non, [elles](elles), elles partent avec nous.", "No, they're leaving with us."],
@@ -361,21 +361,21 @@ DATA.cloze = [
   ["pronoms toniques", "Elle est assise devant [nous](nous).", "She's sitting in front of us."],
   ["pronoms toniques", "Je pars sans [elle](elle).", "I'm leaving without her."],
 
-  // depuis / il y a / pendant — Grammaire avec MOMO 5
+  // depuis / il y a / pendant
   ["expressions du temps", "J'étudie le français [depuis](since/for) 2 ans.", "I've been studying French for 2 years."],
   ["expressions du temps", "Je suis professeur de français [depuis](since/for) 11 ans.", "I've been a French teacher for 11 years."],
-  ["expressions du temps", "J'ai joué ce jeu vidéo [il y a](ago) longtemps.", "I played this video game a long time ago."],
+  ["expressions du temps", "J'ai visité ce musée [il y a](ago) trois ans.", "I visited this museum three years ago."],
   ["expressions du temps", "J'ai habité à Paris [pendant](during) trois ans.", "I lived in Paris for three years."],
   ["expressions du temps", "Je suis arrivé au Canada [il y a](ago) deux ans.", "I arrived in Canada two years ago."],
   ["expressions du temps", "J'apprends le polonais [depuis](since/for) un mois.", "I've been learning Polish for a month."],
-  ["expressions du temps", "Je parle à ma mère [avant de](before) partir au travail.", "I talk to my mother before leaving for work."],
+  ["expressions du temps", "Je bois un café [avant de](before) commencer ma journée.", "I drink a coffee before starting my day."],
   ["expressions du temps", "Il va [bientôt](soon) entrer à la fac.", "He'll soon start university."],
 
-  // adjectifs — A2 session 11–12
-  ["adjectifs", "Ils ont loué une [vieille](vieux) maison au bord de la mer.", "They rented an old house by the sea."],
+  // adjectifs
+  ["adjectifs", "Nous avons acheté une [vieille](vieux) voiture à un voisin.", "We bought an old car from a neighbour."],
   ["adjectifs", "J'ai acheté un [joli](joli) pull.", "I bought a pretty sweater."],
-  ["adjectifs", "Elle habite un [petit](petit) appartement dans le quartier chinois.", "She lives in a small apartment in Chinatown."],
-  ["adjectifs", "Émilie m'a montré le [beau](beau) tatouage qu'elle a sur le bras.", "Émilie showed me the beautiful tattoo on her arm."],
+  ["adjectifs", "Il cherche un [petit](petit) studio près de son travail.", "He's looking for a small studio near work."],
+  ["adjectifs", "Mon frère m'a offert un [beau](beau) livre pour mon anniversaire.", "My brother gave me a beautiful book for my birthday."],
   ["adjectifs", "C'est un [bel](beau) homme.", "He's a handsome man."],
   ["adjectifs", "J'ai une [nouvelle](nouveau) voiture.", "I have a new car."],
   ["adjectifs", "C'est un [nouvel](nouveau) appartement.", "It's a new apartment."],
@@ -465,7 +465,7 @@ DATA.vocab = [
   ["la robe", "dress", "Vêtements et mode"], ["les chaussures", "shoes", "Vêtements et mode"], ["le chapeau", "hat", "Vêtements et mode"],
   ["le tatouage", "tattoo", "Vêtements et mode"], ["branché", "trendy", "Vêtements et mode"], ["le style vestimentaire", "clothing style", "Vêtements et mode"],
   ["une enquête", "survey", "Vêtements et mode"], ["l'appartenance", "belonging", "Vêtements et mode"],
-  // verbes utiles A2
+  // useful verbs
   ["s'occuper de", "to take care of", "Verbes utiles"], ["prendre soin de", "to take care of", "Verbes utiles"], ["allumer", "to turn on", "Verbes utiles"],
   ["éteindre", "to turn off", "Verbes utiles"], ["sonner", "to ring", "Verbes utiles"], ["accompagner", "to give someone a ride", "Verbes utiles"],
   ["aller chercher", "to go pick up", "Verbes utiles"], ["offrir", "to give (a gift)", "Verbes utiles"], ["proposer", "to suggest, to offer", "Verbes utiles"],

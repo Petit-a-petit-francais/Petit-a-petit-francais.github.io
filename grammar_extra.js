@@ -1,8 +1,8 @@
 // Grammar and verbs found in the source files but missing from data.js:
-// A1 notes (COD/COI, en, y, négation, cause, l'heure, pronominaux…), Grammaire avec MOMO 5–6,
-// the Taxi 1 and Taxi 2 syllabus (tables des contenus), FrenchGrammarCheatsheet and FrenchQuestionsPractice.
+// More grammar: pronouns, negation, cause, time, reflexive verbs, comparisons, linking words,
+// tense use, the subjunctive and more, with practice sentences and reference sheets.
 
-// ---------- verbs conjugated in the A1/A2 notes ----------
+// ---------- more verbs ----------
 DATA.verbs.push(
   ["détester", "to hate", "déteste détestes déteste détestons détestez détestent", "détesté", "a"],
   ["jouer", "to play", "joue joues joue jouons jouez jouent", "joué", "a"],
@@ -71,7 +71,7 @@ DATA.verbs.push(
 
 // ---------- practice sentences for the new topics ----------
 DATA.cloze.push(
-  // se présenter — Taxi 1 unité 1, A1 sessions 1–4
+  // se présenter
   ["se présenter", "Je [m'appelle](s'appeler) Parsa.", "My name is Parsa."],
   ["se présenter", "Comment [vous appelez](s'appeler)-vous ?", "What's your name?"],
   ["se présenter", "Tu [t'appelles](s'appeler) comment ?", "What's your name?"],
@@ -87,7 +87,7 @@ DATA.cloze.push(
   ["se présenter", "[On](we, informal) va au cinéma ce soir ?", "Shall we go to the cinema tonight?"],
   ["se présenter", "Je suis [doctorant](PhD student, m) à l'université.", "I'm a PhD student at the university."],
 
-  // prononciation — élision, liaison (Taxi 1, A1 session 2)
+  // prononciation
   ["prononciation", "[J'](je)aime le café.", "I like coffee."],
   ["prononciation", "C'est [l'](le)école de mon fils.", "It's my son's school."],
   ["prononciation", "Il [n'](ne)habite pas ici.", "He doesn't live here."],
@@ -97,7 +97,7 @@ DATA.cloze.push(
   ["prononciation", "[Si](if) tu veux, on peut partir. (if elides only before il/ils: s'il)", "If you want, we can leave."],
   ["prononciation", "Je ne sais pas [s'il](si + il) vient.", "I don't know if he's coming."],
 
-  // genre et nombre — Taxi 1 leçons 1–3, 14; A1 sessions 7–8
+  // genre et nombre
   ["genre et nombre", "Il est acteur, elle est [actrice](acteur, f).", "He's an actor, she's an actress."],
   ["genre et nombre", "Il est vendeur, elle est [vendeuse](vendeur, f).", "He's a salesman, she's a saleswoman."],
   ["genre et nombre", "Il est infirmier, elle est [infirmière](infirmier, f).", "He's a nurse, she's a nurse."],
@@ -113,7 +113,7 @@ DATA.cloze.push(
   ["genre et nombre", "un prix → des [prix](plural)", "a price → prices"],
   ["genre et nombre", "le livre (book) ≠ [la](article) livre (pound)", "the book ≠ the pound"],
 
-  // l'heure, la date, les nombres — A1 session 6, 11; Taxi 1 leçon 13
+  // l'heure, la date, les nombres
   ["l'heure et la date", "Il est sept heures et [quart](07h15).", "It's quarter past seven."],
   ["l'heure et la date", "Il est sept heures et [demie](07h30).", "It's half past seven."],
   ["l'heure et la date", "Il est huit heures moins le [quart](07h45).", "It's quarter to eight."],
@@ -134,7 +134,7 @@ DATA.cloze.push(
   ["l'heure et la date", "1 000 = [mille](number)", "a thousand"],
   ["l'heure et la date", "Ça coûte dix [euros](currency).", "It costs ten euros."],
 
-  // constructions utiles — FrenchGrammarCheatsheet §18, Taxi 1 leçons 5, 16, 22
+  // constructions utiles
   ["constructions utiles", "Il [y a](there is) un livre sur la table.", "There's a book on the table."],
   ["constructions utiles", "Il [n'y a pas](there isn't) de pain.", "There's no bread."],
   ["constructions utiles", "Il [faut](falloir) partir maintenant.", "We have to leave now."],
@@ -151,7 +151,7 @@ DATA.cloze.push(
   ["constructions utiles", "Il [fait](weather) beau aujourd'hui.", "The weather is nice today."],
   ["constructions utiles", "Il [pleut](pleuvoir) depuis ce matin.", "It's been raining since this morning."],
 
-  // négation — A1 notes, Taxi 1 leçons 6, 25, Taxi 2 leçon 21
+  // négation
   ["négation", "Je [ne fume pas](ne pas fumer).", "I don't smoke."],
   ["négation", "Je [ne fume plus](ne plus fumer).", "I don't smoke anymore."],
   ["négation", "Il [ne boit jamais](ne jamais boire) de café.", "He never drinks coffee."],
@@ -168,8 +168,8 @@ DATA.cloze.push(
   ["négation", "Non, je [n'ai pas encore](not yet) fait les courses.", "No, I haven't done the shopping yet."],
   ["négation", "Ne [m'écoutez pas](impératif négatif · m'écouter, vous) !", "Don't listen to me!"],
 
-  // comparatif et superlatif — Taxi 2 leçons 13–16
-  ["comparatif", "Il est [plus](+) grand que les nouveaux condos.", "It's bigger than the new condos."],
+  // comparatif et superlatif
+  ["comparatif", "Mon appartement est [plus](+) grand que le tien.", "My apartment is bigger than yours."],
   ["comparatif", "Paris est [moins](-) calme que la campagne.", "Paris is less quiet than the countryside."],
   ["comparatif", "Je suis [aussi](=) fatigué que toi.", "I'm as tired as you."],
   ["comparatif", "Elle travaille [autant](= verb) que moi.", "She works as much as me."],
@@ -179,9 +179,9 @@ DATA.cloze.push(
   ["comparatif", "Mon [meilleur](best) ami s'appelle Aria.", "My best friend is called Aria."],
   ["comparatif", "C'est la ville [la plus](superlatif +) belle du monde.", "It's the most beautiful city in the world."],
   ["comparatif", "C'est le restaurant [le moins](superlatif -) cher du quartier.", "It's the cheapest restaurant in the area."],
-  ["comparatif", "Quand je mangerai mieux, je serai en [meilleure](bon, f) santé.", "When I eat better, I'll be in better health."],
+  ["comparatif", "Cette pizza est [meilleure](bon, f) que celle d'hier.", "This pizza is better than yesterday's."],
 
-  // adverbes — Grammaire avec MOMO 6, Taxi 2 leçon 19
+  // adverbes
   ["adverbes", "lent → [lentement](adverbe)", "slow → slowly"],
   ["adverbes", "sérieux → [sérieusement](adverbe)", "serious → seriously"],
   ["adverbes", "Il travaille [sérieusement](sérieux) dans son bureau.", "He works seriously in his office."],
@@ -197,13 +197,13 @@ DATA.cloze.push(
   ["adverbes", "Il est [déjà](already) parti.", "He has already left."],
   ["adverbes", "Elle parle [trop](too much).", "She talks too much."],
 
-  // COD / COI — A1 sessions 17, 25 (leçons 22–23); Taxi 1
+  // COD / COI
   ["pronoms COD/COI", "Je regarde la télé. → Je [la](COD) regarde.", "I watch TV. → I watch it."],
   ["pronoms COD/COI", "Tu connais mon frère. → Tu [le](COD) connais.", "You know my brother. → You know him."],
   ["pronoms COD/COI", "Vous adorez Jacques Brel. → Vous [l'](COD)adorez.", "You love Jacques Brel. → You love him."],
-  ["pronoms COD/COI", "On invite Max et Sarah. → On [les](COD) invite.", "We invite Max and Sarah. → We invite them."],
-  ["pronoms COD/COI", "Tu téléphones à tes parents. → Tu [leur](COI) téléphones.", "You call your parents. → You call them."],
-  ["pronoms COD/COI", "Vous parlez à votre patron. → Vous [lui](COI) parlez.", "You talk to your boss. → You talk to him."],
+  ["pronoms COD/COI", "Je regarde les étoiles. → Je [les](COD) regarde.", "I look at the stars. → I look at them."],
+  ["pronoms COD/COI", "Elle écrit à ses grands-parents. → Elle [leur](COI) écrit.", "She writes to her grandparents. → She writes to them."],
+  ["pronoms COD/COI", "Tu réponds à ta prof. → Tu [lui](COI) réponds.", "You answer your teacher. → You answer her."],
   ["pronoms COD/COI", "Je [lui](COI) ai parlé hier.", "I spoke to him yesterday."],
   ["pronoms COD/COI", "Je vais [lui](COI) parler demain.", "I'm going to talk to him tomorrow."],
   ["pronoms COD/COI", "[Parle-lui](impératif · parler à lui, tu) !", "Talk to him!"],
@@ -215,11 +215,11 @@ DATA.cloze.push(
   ["pronoms COD/COI", "Offrez-[lui](COI) des fleurs.", "Give her flowers."],
   ["pronoms COD/COI", "Je la trouve jolie. Et toi, tu [la](COD) trouves comment ?", "I find her pretty. And you, what do you think of her?"],
 
-  // y et en — A1 sessions 19, 24–26; Taxi 2 leçon 16
+  // y et en
   ["y et en", "Je fais du sport. → J'[en](en) fais.", "I do sport. → I do some."],
-  ["y et en", "Vous mangez de la viande. → Vous [en](en) mangez.", "You eat meat. → You eat some."],
-  ["y et en", "Elle a pris du fromage. → Elle [en](en) a pris.", "She took some cheese. → She took some."],
-  ["y et en", "Nous allons faire du tennis. → Nous allons [en](en) faire.", "We're going to play tennis. → We're going to play it."],
+  ["y et en", "Ils boivent du thé. → Ils [en](en) boivent.", "They drink tea. → They drink some."],
+  ["y et en", "J'ai acheté des pommes. → J'[en](en) ai acheté.", "I bought apples. → I bought some."],
+  ["y et en", "Tu vas faire de la natation. → Tu vas [en](en) faire.", "You're going to go swimming. → You're going to do it."],
   ["y et en", "Ils ne parlent pas de leurs projets. → Ils [n'en](negative + en) parlent pas.", "They don't talk about their plans. → They don't talk about them."],
   ["y et en", "Tu as des frères ? — Oui, j'[en](en) ai deux.", "Do you have brothers? — Yes, I have two."],
   ["y et en", "Je travaille à la maison. → J'[y](y) travaille.", "I work at home. → I work there."],
@@ -227,14 +227,14 @@ DATA.cloze.push(
   ["y et en", "N'[y](y) allez pas !", "Don't go there!"],
   ["y et en", "Je ne peux pas [y](y) aller.", "I can't go there."],
   ["y et en", "Maintenant, nous [n'y](negative + y) allons plus.", "Now we don't go there anymore."],
-  ["y et en", "Je me souviens de mon enfance. → Je m'[en](en) souviens.", "I remember my childhood. → I remember it."],
+  ["y et en", "Elle se souvient de ses vacances. → Elle s'[en](en) souvient.", "She remembers her holiday. → She remembers it."],
   ["y et en", "Qu'est-ce que tu [en](en) penses ?", "What do you think about it?"],
-  ["y et en", "Il n'en veut plus. Il [en](en) a assez.", "He doesn't want any more. He's had enough."],
+  ["y et en", "Tu n'en prends plus ? Tu [en](en) as assez ?", "You're not having any more? Have you had enough?"],
   ["y et en", "J'habite au Canada. J'[y](y) habite depuis 2020.", "I live in Canada. I've lived there since 2020."],
 
-  // pronominaux — MOMO 28–29, A1 notes, Taxi 1 leçon 16, Taxi 2
+  // pronominaux
   ["pronominaux", "Je réveille mon enfant. / Je [me réveille](se réveiller) à 7h.", "I wake my child up. / I wake up at 7."],
-  ["pronominaux", "Je lave ma voiture. / Je [me lave](se laver) le visage.", "I wash my car. / I wash my face."],
+  ["pronominaux", "Je promène le chien. / Je [me promène](se promener) au parc.", "I walk the dog. / I go for a walk in the park."],
   ["pronominaux", "Nous [nous promenons](se promener) le dimanche.", "We go for a walk on Sundays."],
   ["pronominaux", "Ils [se disputent](se disputer) tout le temps.", "They argue all the time."],
   ["pronominaux", "Je [me souviens](se souvenir) de mon enfance.", "I remember my childhood."],
@@ -249,20 +249,20 @@ DATA.cloze.push(
   ["pronominaux", "Je [m'ennuie](s'ennuyer) à la maison.", "I'm bored at home."],
   ["pronominaux", "Je [me sens](se sentir) mieux aujourd'hui.", "I feel better today."],
   ["pronominaux", "Où [se trouve](se trouver) la salle D12 ?", "Where is room D12?"],
-  ["pronominaux", "Je ne [me souviens](se souvenir) plus de ce film.", "I don't remember that film anymore."],
+  ["pronominaux", "Tu ne [te souviens](se souvenir) pas de son nom ?", "Don't you remember his name?"],
 
-  // passé composé ou imparfait — Taxi 1 leçon 30, Taxi 2 leçon 17
+  // passé composé ou imparfait
   ["passé composé ou imparfait", "Il [faisait](faire, imparfait = description) beau quand nous [sommes arrivés](arriver, passé composé = event).", "The weather was nice when we arrived."],
   ["passé composé ou imparfait", "Quand j'[étais](être) petit, j'[allais](aller) à l'école à pied.", "When I was little, I walked to school."],
   ["passé composé ou imparfait", "Je [dormais](dormir) quand le téléphone [a sonné](sonner).", "I was sleeping when the phone rang."],
   ["passé composé ou imparfait", "Avant, je [sortais](sortir) beaucoup, mais maintenant je ne sors plus.", "Before, I used to go out a lot, but now I don't anymore."],
   ["passé composé ou imparfait", "Hier, j'[ai vu](voir) un accident.", "Yesterday I saw an accident."],
-  ["passé composé ou imparfait", "La première fois que je suis allée à Istanbul, j'[étais](être) seule et très stressée.", "The first time I went to Istanbul, I was alone and very stressed."],
+  ["passé composé ou imparfait", "La première fois que j'ai pris l'avion, j'[avais](avoir) très peur.", "The first time I flew, I was very scared."],
   ["passé composé ou imparfait", "Tous les étés, nous [allions](aller) à la mer.", "Every summer, we went to the sea."],
   ["passé composé ou imparfait", "Soudain, il [a commencé](commencer) à pleuvoir.", "Suddenly, it started to rain."],
   ["passé composé ou imparfait", "Elle [lisait](lire) pendant que je [cuisinais](cuisiner).", "She was reading while I was cooking."],
 
-  // accord du participe passé — A1 notes session 5, Taxi 2 leçon 26
+  // accord du participe passé
   ["accord du participe", "Elle est [allée](aller) au cinéma.", "She went to the cinema."],
   ["accord du participe", "Elles sont [parties](partir) en vacances.", "They (f) left on holiday."],
   ["accord du participe", "Nous sommes [venus](venir, m pl) en bus.", "We came by bus."],
@@ -273,13 +273,13 @@ DATA.cloze.push(
   ["accord du participe", "Ta robe ? Je l'ai [mise](mettre) hier.", "Your dress? I wore it yesterday."],
   ["accord du participe", "Elles se sont [maquillées](se maquiller).", "They put on make-up."],
 
-  // futur — Taxi 1 leçons 34–36
+  // futur
   ["futur simple", "Quand je [trouverai](trouver, futur) un meilleur emploi, je déménagerai.", "When I find a better job, I'll move."],
   ["futur simple", "Demain, il [neigera](neiger) beaucoup et il [fera](faire) plus froid.", "Tomorrow it will snow a lot and it will be colder."],
   ["futur simple", "Dans dix ans, je [vivrai](vivre) au bord de la mer.", "In ten years, I'll live by the sea."],
   ["futur simple", "Je t'[enverrai](envoyer) un message ce soir.", "I'll send you a message tonight."],
 
-  // hypothèse avec si — Taxi 1 leçon 35, Taxi 2 leçon 16
+  // hypothèse avec si
   ["hypothèse (si)", "S'il fait beau demain, nous [irons](aller, futur) à la plage.", "If it's nice tomorrow, we'll go to the beach."],
   ["hypothèse (si)", "Si tu [viens](venir, présent), on mangera ensemble.", "If you come, we'll eat together."],
   ["hypothèse (si)", "Si j'[avais](avoir, imparfait) de l'argent, j'achèterais une maison.", "If I had money, I would buy a house."],
@@ -288,8 +288,8 @@ DATA.cloze.push(
   ["hypothèse (si)", "Si tu as faim, [mange](manger, impératif tu) quelque chose.", "If you're hungry, eat something."],
   ["hypothèse (si)", "Si on [allait](aller, imparfait) au cinéma ce soir ?", "How about going to the cinema tonight?"],
 
-  // cause et conséquence — A1 notes leçon 27, Taxi 2
-  ["cause et conséquence", "Nous partons à la campagne [parce que](because + sentence) c'est trop bruyant à Paris.", "We're going to the countryside because Paris is too noisy."],
+  // cause et conséquence
+  ["cause et conséquence", "Je reste à la maison [parce que](because + sentence) j'ai de la fièvre.", "I'm staying home because I have a fever."],
   ["cause et conséquence", "Elle est fatiguée [car](because, formal) elle travaille beaucoup.", "She's tired because she works a lot."],
   ["cause et conséquence", "Nous partons à la campagne [à cause du](because of + le) bruit de Paris.", "We're leaving for the countryside because of the noise in Paris."],
   ["cause et conséquence", "J'ai réussi [grâce à](thanks to) mon professeur.", "I succeeded thanks to my teacher."],
@@ -300,7 +300,7 @@ DATA.cloze.push(
   ["cause et conséquence", "Je n'ai pas [assez d'](enough + noun)argent.", "I don't have enough money."],
   ["cause et conséquence", "Il y a [trop de](too much + noun) monde ici.", "There are too many people here."],
 
-  // opposition — Taxi 1 leçon 27, Taxi 2 leçon 34
+  // opposition
   ["opposition", "J'aime le sport, [mais](but) je n'ai pas le temps.", "I like sport, but I don't have time."],
   ["opposition", "Il est malade ; [pourtant](however), il va au travail.", "He's sick; however, he goes to work."],
   ["opposition", "Elle aime la mer [alors que](whereas) je préfère la montagne.", "She likes the sea whereas I prefer the mountains."],
@@ -308,7 +308,7 @@ DATA.cloze.push(
   ["opposition", "Nous sommes sortis [malgré](despite) la pluie.", "We went out despite the rain."],
   ["opposition", "[Par contre](on the other hand), le loyer est très cher.", "On the other hand, the rent is very expensive."],
 
-  // infinitif : pour, avant de, après — Taxi 1 leçon 31, Taxi 2 leçon 24
+  // infinitif : pour, avant de, après
   ["infinitif", "J'apprends le français [pour](purpose) travailler au Canada.", "I'm learning French to work in Canada."],
   ["infinitif", "Lave-toi les mains [avant de](before) manger.", "Wash your hands before eating."],
   ["infinitif", "[Après avoir](after + avoir) mangé, je fais la vaisselle.", "After eating, I do the dishes."],
@@ -318,7 +318,7 @@ DATA.cloze.push(
   ["infinitif", "Elle commence [à](commencer + preposition) parler français.", "She's starting to speak French."],
   ["infinitif", "J'ai oublié [de](oublier + preposition) fermer la porte.", "I forgot to close the door."],
 
-  // gérondif — Taxi 2 leçon 22
+  // gérondif
   ["gérondif", "Je chante [en prenant](prendre) ma douche.", "I sing while taking my shower."],
   ["gérondif", "Il écoute de la musique [en travaillant](travailler).", "He listens to music while working."],
   ["gérondif", "On apprend [en faisant](faire) des erreurs.", "You learn by making mistakes."],
@@ -326,7 +326,7 @@ DATA.cloze.push(
   ["gérondif", "Elle s'est fait mal [en courant](courir).", "She hurt herself while running."],
   ["gérondif", "[En étant](être) patient, tu réussiras.", "By being patient, you'll succeed."],
 
-  // ce qui / ce que — Taxi 2 leçon 35, A2 notes
+  // ce qui / ce que
   ["ce qui / ce que", "Vous ne voyez pas [ce que](what, object) je veux dire.", "You don't see what I mean."],
   ["ce qui / ce que", "[Ce qui](what, subject) est intéressant, c'est son histoire.", "What's interesting is his story."],
   ["ce qui / ce que", "Dis-moi [ce que](what, object) tu veux.", "Tell me what you want."],
@@ -334,14 +334,14 @@ DATA.cloze.push(
   ["ce qui / ce que", "Tout le monde se méfie de [ce que](what, object) vous faites.", "Everyone is wary of what you do."],
   ["ce qui / ce que", "[Ce dont](what, de) j'ai besoin, c'est de vacances.", "What I need is a holiday."],
 
-  // discours rapporté — Taxi 2 leçon 33
+  // discours rapporté
   ["discours rapporté", "« Je suis fatigué. » → Il dit [qu'il est](he says that he is) fatigué.", "He says he's tired."],
   ["discours rapporté", "« Tu viens ? » → Elle me demande [si je viens](she asks if I'm coming).", "She asks me if I'm coming."],
   ["discours rapporté", "« Où habites-tu ? » → Il me demande [où j'habite](where I live).", "He asks me where I live."],
   ["discours rapporté", "« Qu'est-ce que tu fais ? » → Elle me demande [ce que je fais](what I'm doing).", "She asks me what I'm doing."],
   ["discours rapporté", "« Viens ! » → Il me dit [de venir](to come).", "He tells me to come."],
 
-  // pronoms possessifs — Taxi 2 leçon 14
+  // pronoms possessifs
   ["pronoms possessifs", "C'est ton livre ? — Oui, c'est [le mien](mine, m).", "Is it your book? — Yes, it's mine."],
   ["pronoms possessifs", "C'est ta voiture ? — Non, ce n'est pas [la mienne](mine, f).", "Is that your car? — No, it's not mine."],
   ["pronoms possessifs", "Mes enfants sont petits, [les tiens](yours, m pl) sont grands.", "My children are small, yours are big."],
@@ -349,7 +349,7 @@ DATA.cloze.push(
   ["pronoms possessifs", "Votre appartement est plus grand que [le nôtre](ours, m).", "Your apartment is bigger than ours."],
   ["pronoms possessifs", "Ce sont leurs clés ? — Oui, ce sont [les leurs](theirs, pl).", "Are those their keys? — Yes, they're theirs."],
 
-  // pronoms indéfinis — Taxi 2 leçon 16
+  // pronoms indéfinis
   ["pronoms indéfinis", "Il y a [quelqu'un](someone) ?", "Is anyone there?"],
   ["pronoms indéfinis", "Tu veux boire [quelque chose](something) ?", "Do you want something to drink?"],
   ["pronoms indéfinis", "[Chacun](each one) a son style.", "Everyone has their own style."],
@@ -357,7 +357,7 @@ DATA.cloze.push(
   ["pronoms indéfinis", "Je les connais [tous](all of them, m).", "I know all of them."],
   ["pronoms indéfinis", "[Plusieurs](several) amis sont venus.", "Several friends came."],
 
-  // lequel / où / dont — Taxi 2 leçons 11–12
+  // lequel / où / dont
   ["relatifs", "C'est la maison [où](relatif) j'ai grandi.", "It's the house where I grew up."],
   ["relatifs", "C'est l'ami [dont](relatif · parler de) je t'ai parlé.", "It's the friend I told you about."],
   ["relatifs", "J'ai un livre [dont](relatif · avoir besoin de) tu as besoin.", "I have a book you need."],
@@ -366,7 +366,7 @@ DATA.cloze.push(
   ["questions", "Voici trois livres. [Lequel](which one, m) veux-tu ?", "Here are three books. Which one do you want?"],
   ["questions", "[Lesquels](which ones, m pl) de ces films as-tu vus ?", "Which of these films have you seen?"],
 
-  // questions — FrenchQuestionsPractice (10 themes)
+  // questions
   ["questions", "[De quelle](which, f) couleur est ta voiture ?", "What colour is your car?"],
   ["questions", "[D'où](where from) venez-vous ?", "Where do you come from?"],
   ["questions", "[Quels](which, m pl) pays avez-vous visités ?", "Which countries have you visited?"],
@@ -375,14 +375,14 @@ DATA.cloze.push(
   ["questions", "[Combien de](how many) frères et sœurs as-tu ?", "How many brothers and sisters do you have?"],
   ["questions", "C'est [quand](when), ton anniversaire ?", "When is your birthday?"],
   ["questions", "[Combien](how much) ça coûte ?", "How much does it cost?"],
-  ["questions", "Qu'est-ce que tu as reçu [comme](as) cadeau ?", "What did you get as a present?"],
+  ["questions", "Qu'est-ce que tu prends [comme](as) dessert ?", "What are you having for dessert?"],
   ["questions", "[Pourquoi](why) tu ne réponds jamais au téléphone ?", "Why do you never answer the phone?"],
   ["questions", "[Où](where) fais-tu tes courses ?", "Where do you do your shopping?"],
   ["questions", "Vous avez une table [pour](for) deux ?", "Do you have a table for two?"],
   ["questions", "[Vous avez l'heure, s'il vous plaît ?]", "Do you have the time, please?", "Standard (intonation, polite): ask a stranger for the time"],
 
-  // subjonctif — Taxi 2 leçon 36, A1 notes
-  ["subjonctif", "Il faut que je [sois](être) en bonne santé.", "I need to be in good health."],
+  // subjonctif
+  ["subjonctif", "Il faut que tu [sois](être) à l'heure demain.", "You need to be on time tomorrow."],
   ["subjonctif", "Il faut que tu [fasses](faire) tes devoirs.", "You have to do your homework."],
   ["subjonctif", "Je veux que vous [veniez](venir) avec nous.", "I want you to come with us."],
   ["subjonctif", "Il faut que nous [partions](partir) tôt.", "We have to leave early."],
@@ -392,9 +392,9 @@ DATA.cloze.push(
   ["subjonctif", "Il faut que vous [parliez](parler) plus fort.", "You need to speak louder."],
   ["subjonctif", "Je pense qu'il [vient](venir, indicatif). / Je ne pense pas qu'il [vienne](venir, subjonctif).", "I think he's coming. / I don't think he's coming."],
 
-  // expressions du temps — Grammaire avec MOMO 5
+  // expressions du temps
   ["expressions du temps", "[Ça fait](it's been) 2 ans que j'étudie le français.", "I've been studying French for 2 years."],
-  ["expressions du temps", "[Depuis qu'](since + sentence)il est parti, les choses ont beaucoup changé.", "Since he left, things have changed a lot."],
+  ["expressions du temps", "[Depuis qu'](since + sentence)elle habite ici, elle est plus heureuse.", "Since she has lived here, she's happier."],
   ["expressions du temps", "Le film commence [dans](in, future) 5 minutes.", "The film starts in 5 minutes."],
   ["expressions du temps", "J'ai été hospitalisé [pendant](for, finished) 5 jours.", "I was in hospital for 5 days."],
   ["expressions du temps", "J'ai fait mes devoirs [en](in, time taken) une heure.", "I did my homework in an hour."],
@@ -461,7 +461,7 @@ DATA.fiches.push(
 <p><b>Superlative:</b> <b>le / la / les + plus / moins</b> + adjective (+ de): <i>la ville la plus belle du monde</i>, <i>le moins cher du quartier</i>. Irregular: <i>le meilleur, la meilleure, le mieux</i>.</p>
 <p>Use stressed pronouns after que: plus grand que <b>moi / toi / lui / eux</b>.</p>` },
   { id: "adverbes", title: "Les adverbes", topics: ["adverbes"], html: `<p>Adverbs describe a verb, adjective or another adverb (manner, time, place, quantity). They don't agree.</p>
-<p><b>Forming -ment adverbs</b> (Grammaire avec MOMO 6):</p>
+<p><b>Forming -ment adverbs</b>:</p>
 <table><tr><th>Adjective</th><th>Rule</th><th>Adverb</th></tr>
 <tr><td>sérieux → sérieuse</td><td>feminine + -ment</td><td>sérieusement, lentement, excessivement</td></tr>
 <tr><td>poli, vrai, résolu, obstiné</td><td>ends in -i, -é, -u: masculine + -ment</td><td>poliment, vraiment, résolument, obstinément</td></tr>
@@ -544,10 +544,10 @@ DATA.fiches.push(
 <p>Indicative after certainty: <i>Je pense qu'il <b>vient</b></i>; subjunctive after doubt: <i>Je ne pense pas qu'il <b>vienne</b></i>. Same subject → infinitive instead: <i>Je veux partir</i> (not "je veux que je parte").</p>` },
 );
 
-// extra rule text for existing sheets, from the A1 notes, Grammaire avec MOMO 5 and Taxi 2
+// extra rule text for existing sheets
 (() => {
   const add = (id, html) => { const f = DATA.fiches.find((x) => x.id === id); f.html += html; };
-  add("imp", `<p><b>When to use it</b> (A1 notes): habits, situations, continuity, descriptions and states in the past. See the lesson "Passé composé ou imparfait ?" for how it combines with the passé composé.</p>`);
+  add("imp", `<p><b>When to use it</b>: habits, situations, continuity, descriptions and states in the past. See the lesson "Passé composé ou imparfait ?" for how it combines with the passé composé.</p>`);
   add("fut", `<p><b>Quand + futur:</b> after <i>quand</i> about the future, French uses the futur (not the présent): <i>Quand je trouverai un emploi, je déménagerai.</i></p>
 <p><b>Expressing the future:</b> présent (<i>demain je pars</i>), futur proche (near / certain: <i>je vais partir</i>), futur simple (plans, predictions, weather: <i>il neigera</i>).</p>`);
   add("temps", `<p><b>depuis que</b> + sentence: <i>Depuis qu'il est parti, tout a changé.</i> <b>Ça fait … que</b> = depuis: <i>Ça fait 2 ans que j'étudie le français.</i></p>
@@ -639,8 +639,8 @@ DATA.units = [
   ]},
 ];
 
-// Gaps found in the final coverage pass: L'impératif Exercices et corrigé, Taxi 1 leçons 5 & 10 (lieu, direction),
-// Taxi 2 leçon 29 (marqueurs chronologiques).
+// Extra practice: imperative, place and direction,
+// and time markers.
 DATA.verbs.push(
   ["se taire", "to be quiet", "tais tais tait taisons taisez taisent", "tu", "e"],
   ["se servir", "to help oneself", "sers sers sert servons servez servent", "servi", "e"],
@@ -684,7 +684,7 @@ DATA.cloze.push(
   add("recit", `<p><b>Sequencing a story</b> (marqueurs chronologiques): d'abord → ensuite / puis / après → enfin / finalement. Also: un jour, soudain, tout à coup, à ce moment-là.</p>`);
 })();
 
-// Verbs used throughout Vocabulaire progressif that weren't in the conjugation set.
+// More verbs.
 DATA.verbs.push(
   ["perdre", "to lose", "perds perds perd perdons perdez perdent", "perdu", "a"],
   ["rendre", "to give back", "rends rends rend rendons rendez rendent", "rendu", "a"],
@@ -692,7 +692,7 @@ DATA.verbs.push(
   ["construire", "to build", "construis construis construit construisons construisez construisent", "construit", "a"],
 );
 
-// A2 session 15 (A2 : 15 .pdf): polite conditionnel questions, démonstratifs -ci/-là, one sentence through 7 tenses, lequel.
+// Polite conditionnel questions, démonstratifs -ci/-là, one sentence through 7 tenses, lequel.
 DATA.verbs.push(
   ["souhaiter", "to wish", "souhaite souhaites souhaite souhaitons souhaitez souhaitent", "souhaité", "a"],
   ["gérer", "to manage", "gère gères gère gérons gérez gèrent", "géré", "a"],
@@ -715,7 +715,7 @@ DATA.cloze.push(
   ["questions", "Il y a deux cafés. [Lequel](which one, m) préfères-tu ?", "There are two cafés. Which one do you prefer?"],
   ["questions", "J'ai deux sœurs. — [Laquelle](which one, f) habite à Lyon ?", "I have two sisters. — Which one lives in Lyon?"],
   ["questions", "Voici des chaussures. [Lesquelles](which ones, f pl) veux-tu essayer ?", "Here are some shoes. Which ones do you want to try?"],
-  // one sentence through all the tenses (session 15)
+  // one sentence through all the tenses
   ...[
     ["Je [dois](devoir · présent) gérer mon temps.", "J'[ai dû](devoir · passé composé) gérer mon temps.", "Je [devais](devoir · imparfait) gérer mon temps.", "Je [viens de](devoir · passé récent) devoir gérer mon temps.", "Je [vais devoir](devoir · futur proche) gérer mon temps.", "Je [devrai](devoir · futur simple) gérer mon temps.", "Je [devrais](devoir · conditionnel) gérer mon temps.", "I must / had to / used to have to / just had to / am going to have to / will have to / should manage my time."],
     ["Elle [est](être · présent) en retard.", "Elle [a été](être · passé composé) en retard.", "Elle [était](être · imparfait) en retard.", "Elle [vient d'être](être · passé récent) en retard.", "Elle [va être](être · futur proche) en retard.", "Elle [sera](être · futur simple) en retard.", "Elle [serait](être · conditionnel) en retard.", "She is / was / was / has just been / is going to be / will be / would be late."],
@@ -723,7 +723,7 @@ DATA.cloze.push(
     ["Nous [connaissons](connaître · présent) ce quartier.", "Nous [avons connu](connaître · passé composé) ce quartier.", "Nous [connaissions](connaître · imparfait) ce quartier.", "Nous [venons de connaître](connaître · passé récent) ce quartier.", "Nous [allons connaître](connaître · futur proche) ce quartier.", "Nous [connaîtrons](connaître · futur simple) ce quartier.", "Nous [connaîtrions](connaître · conditionnel) ce quartier.", "We know / knew / used to know / have just got to know / are going to get to know / will know / would know this neighbourhood."],
   ].flatMap((row) => row.slice(0, 7).map((s) => ["changer de temps", s, row[7]])),
 );
-DATA.fiches.push({ id: "septtemps", title: "Les 7 temps de l'indicatif", topics: ["changer de temps"], html: `<p>One sentence, seven tenses (A2 session 15). <b>Simple tenses</b> = one word; <b>compound tenses</b> = auxiliary + verb.</p>
+DATA.fiches.push({ id: "septtemps", title: "Les 7 temps de l'indicatif", topics: ["changer de temps"], html: `<p>One sentence, seven tenses. <b>Simple tenses</b> = one word; <b>compound tenses</b> = auxiliary + verb.</p>
 <table><tr><th>Tense</th><th>Formula</th><th>devoir</th><th>être</th></tr>
 <tr><td>présent</td><td>stem + ending</td><td>je dois</td><td>elle est</td></tr>
 <tr><td>passé composé</td><td>avoir / être + participe passé</td><td>j'ai dû</td><td>elle a été</td></tr>
@@ -734,13 +734,13 @@ DATA.fiches.push({ id: "septtemps", title: "Les 7 temps de l'indicatif", topics:
 <tr><td>conditionnel présent</td><td>future stem + ais, ais, ait, ions, iez, aient</td><td>je devrais</td><td>elle serait</td></tr></table>
 <p>To switch tense: find the infinitive and the person first, then apply the formula. The rest of the sentence doesn't change.</p>` });
 DATA.short.septtemps = "Find the infinitive and the person, then apply the tense formula; the rest of the sentence stays the same.";
-DATA.fiches.find((f) => f.id === "fut").html += `<p><b>Polite questions</b> (A2 session 15): <i>Pourriez-vous… ? Est-ce que je pourrais… ? Tu préférerais… ? Que voudrait-elle… ?</i></p>`;
+DATA.fiches.find((f) => f.id === "fut").html += `<p><b>Polite questions</b>: <i>Pourriez-vous… ? Est-ce que je pourrais… ? Tu préférerais… ? Que voudrait-elle… ?</i></p>`;
 (() => {
   const time = DATA.units.find((u) => u.title === "Talking about time").lessons;
   time.splice(time.findIndex((l) => l.id === "fut") + 1, 0, { id: "septtemps", title: "Switching between tenses", fiche: "septtemps", topics: ["changer de temps"] });
 })();
 
-// Verbs that appear conjugated in the A1/A2 notes (page-by-page pass) but weren't in the conjugation set.
+// More verbs.
 DATA.verbs.push(
   ["dîner", "to have dinner", "dîne dînes dîne dînons dînez dînent", "dîné", "a"],
   ["déjeuner", "to have lunch", "déjeune déjeunes déjeune déjeunons déjeunez déjeunent", "déjeuné", "a"],
@@ -776,9 +776,9 @@ DATA.verbs.push(
   ["s'inquiéter", "to worry", "inquiète inquiètes inquiète inquiétons inquiétez inquiètent", "inquiété", "e"],
   ["se calmer", "to calm down", "calme calmes calme calmons calmez calment", "calmé", "e"],
 );
-DATA.fiches.find((f) => f.id === "relatifs").html += `<p><b>Compound relatives</b> (listed in A2 session 10, used more at B1): after a preposition, use lequel / laquelle / lesquels / lesquelles: <i>pour lequel, dans laquelle, sur lesquels</i>; à + lequel → <b>auquel</b>, à + lesquels → <b>auxquels</b>; de + lequel → duquel.</p>`;
+DATA.fiches.find((f) => f.id === "relatifs").html += `<p><b>Compound relatives</b> (used more at B1): after a preposition, use lequel / laquelle / lesquels / lesquelles: <i>pour lequel, dans laquelle, sur lesquels</i>; à + lequel → <b>auquel</b>, à + lesquels → <b>auxquels</b>; de + lequel → duquel.</p>`;
 
-// Regular -er verbs that appear conjugated in the notes (second page-by-page pass).
+// More regular -er verbs.
 (() => {
   const er = (inf, en, aux = "a") => {
     const refl = /^(se |s')/.test(inf), b = inf.replace(/^(se |s')/, "").slice(0, -2);
@@ -805,7 +805,7 @@ DATA.fiches.find((f) => f.id === "relatifs").html += `<p><b>Compound relatives</
   );
 })();
 
-// Last verbs from the page-by-page notes pass.
+// More verbs.
 DATA.verbs.push(
   ...[["ajouter", "to add"], ["assister", "to attend"], ["créer", "to create"], ["durer", "to last"], ["saigner", "to bleed"], ["séjourner", "to stay (somewhere)"], ["prêter", "to lend"], ["se relaxer", "to relax"], ["masser", "to massage"]]
     .filter(([inf]) => !DATA.verbs.some((v) => v[0] === inf))
