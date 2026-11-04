@@ -1,8 +1,9 @@
 {
+  "id": "./",
   "name": "Petit à petit français",
   "short_name": "Petit à petit",
   "description": "Practise French little by little: lessons, verb drills, review and cheatsheets.",
-  "lang": "fr",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
