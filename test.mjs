@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Parsa Kamalipour
 // Run: node test.mjs — checks the conjugation engine, grader and scheduler against known-correct forms.
 import { readFileSync, existsSync } from "node:fs";
 import vm from "node:vm";

@@ -32,6 +32,10 @@ Checks the conjugation engine, grading, the scheduler, and that every sentence, 
 
 ## Licence
 
-The code is under the [MIT License](LICENSE). The learning content (sentences, translations, grammar sheets, course structure) and the logo are © 2026 Parsa Kamalipour, all rights reserved. Third-party components are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The code (every file in this repo except the learning content, the logo and the third-party files: `fonts/`, `licenses/` and the Lucide icon paths in `app.js`) is © 2026 Parsa Kamalipour, licensed under the [GNU General Public License v3.0 or later](LICENSE). You may use, study, change and share it, but if you distribute a modified version, you must release its source under the same licence.
+
+The learning content (the practice sentences, translations, grammar sheets, vocabulary lists and course structure in `data.js`, `grammar_extra.js` and `vocab_extra.js`) and the logo (`logo.svg`, `icons/`) are © 2026 Parsa Kamalipour, all rights reserved. They are not covered by the GPL and may not be copied or reused without permission.
+
+Third-party components keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Petit à petit français is an independent project. It is not affiliated with, endorsed by or sponsored by any publisher, school, course or podcast. The example sentences and explanations are written for this app.

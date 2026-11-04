@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Parsa Kamalipour. All rights reserved. Not covered by the GPL; see README.
 // Content for Petit à petit français: verbs, practice sentences, vocabulary, grammar sheets.
 // Verb row: [infinitive, english, "présent je tu il nous vous ils" (a|b = both accepted), participe passé, aux a/e, futur stem (if irregular), imparfait stem (if irregular)]
 window.DATA = {};

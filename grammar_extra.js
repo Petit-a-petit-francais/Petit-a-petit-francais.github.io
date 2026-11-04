@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Parsa Kamalipour. All rights reserved. Not covered by the GPL; see README.
 // Grammar and verbs found in the source files but missing from data.js:
 // More grammar: pronouns, negation, cause, time, reflexive verbs, comparisons, linking words,
 // tense use, the subjunctive and more, with practice sentences and reference sheets.

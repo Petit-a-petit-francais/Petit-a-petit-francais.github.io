@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Parsa Kamalipour
 // Pure logic: conjugation engine, grading, diff, spaced repetition. No DOM here (tested in node by test.mjs).
 (function (root) {
   const SUBJ = ["je", "tu", "il", "nous", "vous", "ils"];
