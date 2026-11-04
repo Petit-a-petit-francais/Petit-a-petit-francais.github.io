@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Petit à petit français</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="logo" href="#/"><img class="logo-mark" src="logo.svg" alt="" width="34" height="34"><span>Petit à petit français</span></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot" id="sidebar-foot"></div>
+  </aside>
+  <main id="main" tabindex="-1"></main>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Main navigation"></nav>
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h2 id="dialog-title"></h2><button class="icon-btn" type="button" id="dialog-close" aria-label="Close"></button></div>
+  <div class="dialog-body" id="dialog-body"></div>
+</dialog>
+<script src="core.js"></script>
+<script src="data.js"></script>
+<script src="grammar_extra.js"></script>
+<script src="vocab_extra.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
