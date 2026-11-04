@@ -1,5 +1,5 @@
 // Run: node test.mjs — checks the conjugation engine, grader and scheduler against known-correct forms.
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import vm from "node:vm";
 import assert from "node:assert/strict";
 
@@ -119,3 +119,11 @@ const vkeys = new Map();
 for (const w of DATA.vocab) { const k = w[0].toLowerCase(); assert.ok(!vkeys.has(k), `duplicate vocab ${w[0]}`); vkeys.set(k, 1); assert.ok(!/[\/()]/.test(w[0]), `bad vocab ${w[0]}`); }
 assert.equal(new Set(DATA.verbs.map((v) => v[0])).size, DATA.verbs.length, "duplicate verb");
 console.log(`ok — ${DATA.units.reduce((n, u) => n + u.lessons.length, 0)} grammar lessons, ${DATA.fiches.length} sheets`);
+
+// offline install: every file the service worker caches and every manifest icon exists
+const here = (f) => new URL(f, import.meta.url);
+const sw = readFileSync(here("sw.js"), "utf8");
+const cached = JSON.parse(sw.match(/const APP = (\[[^\]]*\])/)[1]);
+for (const f of cached.filter((f) => f !== "./")) assert.ok(existsSync(here(f)), `sw.js caches missing file ${f}`);
+for (const i of JSON.parse(readFileSync(here("manifest.webmanifest"), "utf8")).icons) assert.ok(existsSync(here(i.src)), `manifest icon missing ${i.src}`);
+console.log(`ok — ${cached.length} offline files`);
