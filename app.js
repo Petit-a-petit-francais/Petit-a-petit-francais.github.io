@@ -105,8 +105,16 @@
     linux: "On Linux, Chrome includes online Google French voices. Firefox uses your system speech engine: install speech-dispatcher with a French voice (espeak-ng, or a better-sounding engine such as RHVoice or Piper), then restart the browser.",
     chromeos: "On a Chromebook, add Google French voices in Settings › Accessibility › Text-to-Speech › Text-to-Speech engine settings.",
     mac: "On a Mac, download better voices: System Settings (System Preferences on older macOS) › Accessibility › Spoken Content › System voice › Manage Voices › French, and pick ones marked Premium or Enhanced (e.g. Thomas for France, Amélie or Nicolas for Canada). Microsoft Edge also has natural online voices.",
-    "mac-safari": "Safari doesn't give websites the Enhanced and Premium voices you download on your Mac (a WebKit bug), so here you only get the built-in ones. For the better voices, open this site in Chrome or Microsoft Edge: Chrome uses the voices you've downloaded in System Settings › Accessibility › Spoken Content, and Edge adds its own natural online voices.",
-    ios: "On iPhone and iPad, websites can only use the built-in voices: the Enhanced and Premium voices you download in Settings aren't available to them in any browser (a WebKit limitation).",
+    "mac-safari": "Safari currently doesn't pass the Enhanced and Premium voices you download on your Mac to websites (a WebKit bug), so here you only get the built-in ones. For the better voices, open this site in Chrome or Microsoft Edge: Chrome uses the voices you've downloaded in System Settings › Accessibility › Spoken Content, and Edge adds its own natural online voices.",
+    ios: "On iPhone and iPad, websites currently only get the built-in voices: the Enhanced and Premium voices you download in Settings aren't passed to them in any browser (a WebKit bug).",
+  };
+  // the Safari/iPhone notes only apply while WebKit hides downloaded voices; drop them once better voices show up
+  const voiceHelp = () => {
+    const better = voices.some((v) => /enhanced|premium|amélioré/i.test(v.name));
+    let k = OS === "mac" && SAFARI ? "mac-safari" : OS;
+    if (better && k === "mac-safari") k = "mac";
+    if (better && k === "ios") return "";
+    return (VOICE_HELP[k] || "For the most natural voices, open this site in Microsoft Edge.") + (k === "mac-safari" || k === "ios" ? "" : " Reload the page afterwards.");
   };
   const voicesFor = (acc) => voices.filter((v) => vLang(v) === ACCENTS[acc].lang.toLowerCase());
   const voiceFor = (acc) => voices.find((x) => x.voiceURI === S.settings[ACCENTS[acc].key]) || voicesFor(acc)[0] || (acc === "fr" ? voices[0] : null);
@@ -700,7 +708,7 @@
         ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span style="display:flex;gap:8px"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
         <div class="field"><label for="rate">Speed</label><input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="${st.rate}"></div>
         <div class="field"><label for="autoplay">Read the answer aloud after each question</label><input type="checkbox" id="autoplay" ${st.autoplay ? "checked" : ""} style="width:22px;height:22px"></div>
-        <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${VOICE_HELP[OS === "mac" && SAFARI ? "mac-safari" : OS] || "For the most natural voices, open this site in Microsoft Edge."} Reload the page afterwards.</p>
+        <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${voiceHelp()}</p>
       </div>
       <h2>Appearance</h2>
       <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
