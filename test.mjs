@@ -139,11 +139,109 @@ console.log(`ok — ${cached.length} offline files`);
     lessons: { l1: 123, l2: "<i>" },
     settings: { newPerDay: "<svg>", sessionSize: 999, accent: "<x>", theme: "dark", tenses: ["pc", "<y>"], rate: 3, autoplay: "yes", voice: 5 },
   }, D, ["pres", "pc", "fut"]);
-  assert.equal(JSON.stringify(c.srs), '{"a":{"r":1,"i":0,"e":2.5,"l":0,"n":0,"d":0}}');
-  assert.equal(JSON.stringify(c.log), '{"2026-11-04":{"n":0,"ok":3,"nw":0}}');
+  assert.equal(JSON.stringify(c.srs), '{"a":{"r":1,"i":0,"e":2.5,"l":0,"n":0,"d":0,"m":0}}');
+  assert.equal(JSON.stringify(c.logs.legacy), '{"2026-11-04":{"n":0,"ok":3,"nw":0}}');
   assert.equal(JSON.stringify(c.lessons), '{"l1":123}');
   assert.equal(c.srs.r, undefined, "__proto__ id must not change the prototype");
   assert.equal(JSON.stringify(c.settings), '{"newPerDay":15,"sessionSize":100,"voice":"","voiceQc":"","accent":"fr","rate":1.2,"autoplay":true,"tenses":["pc"],"theme":"dark"}');
   assert.equal(JSON.stringify(Core.cleanState({}, D, ["pres"]).settings.tenses), '["pres","pc"]');
 }
 console.log("ok — progress validation");
+
+// merging progress from several devices and clouds (v2 format)
+{
+  const D = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: ["pres", "pc"], theme: "auto" };
+  const T = ["pres", "pc", "fut"];
+  const clean = (x) => Core.cleanState(x, D, T);
+  const same = (x, y, msg) => assert.deepEqual(JSON.parse(JSON.stringify(x)), JSON.parse(JSON.stringify(y)), msg);
+  const sv = Core.syncView;
+  // seeded random states (mulberry32)
+  let seed = 42;
+  const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const pick = (a) => a[Math.floor(rnd() * a.length)];
+  const gen = () => {
+    const srs = {}, logs = {}, lessons = {}, setAt = {};
+    for (const id of ["a", "b", "c", "d"]) if (rnd() < 0.6) srs[id] = { r: pick([0, 1, 2]), i: pick([0, 1, 3]), e: 2.5, l: 0, n: pick([1, 2, 3]), d: 0, m: pick([0, 5, 9]) };
+    for (const slot of ["devaaaaa", "devbbbbb"]) if (rnd() < 0.7) logs[slot] = { "2026-11-01": { n: pick([0, 2, 5]), ok: pick([0, 1, 4]), nw: pick([0, 1]) } };
+    for (const id of ["l1", "l2"]) if (rnd() < 0.5) lessons[id] = pick([10, 20]);
+    const settings = { theme: pick(["auto", "light", "dark"]), sessionSize: pick([10, 20]), voice: pick(["x", "y"]) };
+    for (const k of Core.SYNCED) setAt[k] = pick([0, 3, 7]);
+    return clean({ v: 2, epoch: pick([{ id: "aaaa", t: 1 }, { id: "bbbb", t: 2 }]), srs, logs, lessons, settings, setAt });
+  };
+  for (let k = 0; k < 200; k++) {
+    const a = gen(), b = gen(), c = gen();
+    same(Core.merge(a, a), a, "idempotent");
+    same(sv(Core.merge(a, b)), sv(Core.merge(b, a)), "commutative");
+    same(sv(Core.merge(Core.merge(a, b), c)), sv(Core.merge(a, Core.merge(b, c))), "associative");
+    assert.equal(Core.merge(a, b).settings.voice, a.settings.voice, "device-only settings stay local");
+  }
+  // two devices offline
+  const day = "2026-11-01";
+  const A = clean({ v: 2, srs: { x: { n: 1, m: 100 } }, logs: { devaaaaa: { [day]: { n: 4 } } } });
+  const B = clean({ v: 2, srs: { y: { n: 1, m: 101 } }, logs: { devbbbbb: { [day]: { n: 3 } } } });
+  const AB = Core.merge(A, B);
+  assert.ok(AB.srs.x && AB.srs.y && AB.logs.devaaaaa && AB.logs.devbbbbb);
+  assert.equal(Core.sumLogs(AB.logs)[day].n, 7);
+  // same slot and day: larger count each
+  const L1 = clean({ v: 2, logs: { devaaaaa: { [day]: { n: 5, ok: 2, nw: 1 } } } }), L2 = clean({ v: 2, logs: { devaaaaa: { [day]: { n: 3, ok: 4, nw: 0 } } } });
+  same(Core.merge(L1, L2).logs.devaaaaa[day], { n: 5, ok: 4, nw: 1 });
+  // skewed clock
+  assert.equal(Core.stamp({ srs: { a: { m: 9e12 } } }, 1000), 9e12 + 1);
+  assert.equal(Core.stamp(clean({}), 1000), 1000);
+  // card ties
+  const C1 = clean({ v: 2, srs: { a: { m: 5, n: 2 } } }), C2 = clean({ v: 2, srs: { a: { m: 5, n: 3 } } });
+  assert.equal(Core.merge(C1, C2).srs.a.n, 3);
+  assert.equal(Core.merge(C2, C1).srs.a.n, 3);
+  const C3 = clean({ v: 2, srs: { a: { m: 5, n: 3, i: 1 } } }), C4 = clean({ v: 2, srs: { a: { m: 5, n: 3, i: 2 } } });
+  same(Core.merge(C3, C4).srs.a, Core.merge(C4, C3).srs.a);
+  // setting with both stamps 0: larger JSON string wins, both orders
+  const S1 = clean({ settings: { theme: "dark" } }), S2 = clean({ settings: { theme: "light" } });
+  assert.equal(Core.merge(S1, S2).settings.theme, "light");
+  assert.equal(Core.merge(S2, S1).settings.theme, "light");
+  const S3 = clean({ v: 2, settings: { theme: "dark" }, setAt: { theme: 9 } });
+  assert.equal(Core.merge(S2, S3).settings.theme, "dark");
+  assert.equal(Core.merge(S2, S3).setAt.theme, 9);
+  // epochs: the later epoch wins outright
+  const E1 = clean({ v: 2, epoch: { id: "b", t: 5 }, srs: { a: { m: 1 } } });
+  const E2 = clean({ v: 2, epoch: { id: "a", t: 5 }, srs: { a: { m: 9 }, b: { m: 9 } }, lessons: { l1: 3 } });
+  same(sv(Core.merge(E2, E1)), sv(E1));
+  same(sv(Core.merge(E1, E2)), sv(E1));
+  // v1 input
+  const v1 = { srs: { a: { last: 7, r: 1 } }, log: { [day]: { n: 2 } }, settings: {} };
+  const c1 = clean(v1);
+  assert.equal(c1.v, 2);
+  assert.equal(c1.srs.a.m, 7);
+  assert.equal(c1.logs.legacy[day].n, 2);
+  same(c1.epoch, { id: "", t: 0 });
+  assert.ok(Core.SYNCED.every((k) => c1.setAt[k] === 0));
+  assert.equal(Core.sumLogs(Core.merge(Core.merge(c1, clean(v1)), clean(v1)).logs)[day].n, 2, "re-import never double-counts");
+  // versions
+  assert.equal(Core.tooNew({ v: 3 }), true);
+  assert.equal(Core.tooNew({ v: 2 }), false);
+  assert.equal(Core.tooNew({}), false);
+  // garbage cleans to valid shapes
+  const g = clean({ logs: { "<x>": { bad: { n: 1 } }, devaaaaa: { bad: { n: 1 }, [day]: { n: "<b>" } } }, epoch: { id: "<s>", t: "x" }, v: "2", setAt: { theme: "<x>", voice: 5 } });
+  assert.ok(Object.keys(g.logs).every((k) => /^(legacy|[a-z0-9]{8,32})$/.test(k)));
+  same(g.logs, { devaaaaa: { [day]: { n: 0, ok: 0, nw: 0 } } });
+  same(g.epoch, { id: "", t: 0 });
+  same(Object.keys(g.setAt).sort(), [...Core.SYNCED].sort());
+  assert.equal(g.setAt.theme, 0);
+  assert.ok(/^[a-z0-9]{0,32}$/.test(clean({ epoch: { id: "ok1", t: 3 } }).epoch.id));
+  // helpers
+  assert.equal(Core.isEmpty(clean({})), true);
+  assert.equal(Core.isEmpty(clean({ v: 2, logs: { devaaaaa: { [day]: { n: 0 } } } })), true);
+  assert.equal(Core.isEmpty(c1), false);
+  assert.equal(sv(c1).settings.voice, undefined);
+  assert.equal(sv(c1).settings.theme, "auto");
+  const ep = { id: "zz", t: 50 }, r = Core.restamp(c1, ep, 1000);
+  same(r.epoch, ep);
+  assert.ok(r.srs.a.m > 50 && Core.SYNCED.every((k) => r.setAt[k] === r.srs.a.m));
+  same(sv(Core.merge(r, clean({ v: 2, epoch: ep }))).srs, sv(r).srs, "restamped data survives in the new epoch");
+  const em = Core.emptyState(D, ep);
+  assert.equal(Core.isEmpty(em), true);
+  same(em.epoch, ep);
+  same(clean(em), em, "empty state is already clean");
+  assert.equal(Core.hash("hello"), "4f9f2cab");
+  assert.equal(Core.hash(""), "811c9dc5");
+}
+console.log("ok — merge");

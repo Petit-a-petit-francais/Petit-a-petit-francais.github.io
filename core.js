@@ -256,29 +256,126 @@
   }
   const fillCloze = (s) => s.replace(/\[([^\]|]+)[^\]]*\](\([^)]+\))?/g, "$1");
 
-  // Saved or imported progress is untrusted: keep only known keys, finite numbers and allowed values.
+  // ---------- saved progress (v2: mergeable across devices and clouds) ----------
+  const V = 2;
+  const SYNCED = ["newPerDay", "sessionSize", "tenses", "theme", "accent", "autoplay"];
+  const DEVICE_ONLY = ["voice", "voiceQc", "rate"];
+  const tooNew = (raw) => Number(raw && raw.v) > V;
+  const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+  const num = (x, lo, hi, d) => (Number.isFinite(+x) && x !== null && x !== "" ? Math.min(hi, Math.max(lo, +x)) : d);
+  const cleanDays = (x) => {
+    const out = {};
+    for (const [day, d] of Object.entries(obj(x))) if (/^\d{4}-\d{2}-\d{2}$/.test(day))
+      out[day] = { n: num(obj(d).n, 0, 1e6, 0), ok: num(obj(d).ok, 0, 1e6, 0), nw: num(obj(d).nw, 0, 1e6, 0) };
+    return out;
+  };
+
+  // Saved, imported or cloud progress is untrusted: keep only known keys, finite numbers and allowed values.
+  // Takes v1 (log) or v2 (logs) input and always returns v2.
   function cleanState(s, defaults, tenses) {
-    const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
-    const num = (x, lo, hi, d) => (Number.isFinite(+x) && x !== null && x !== "" ? Math.min(hi, Math.max(lo, +x)) : d);
-    const srs = {}, log = {}, lessons = {};
+    s = obj(s);
+    const srs = {}, logs = {}, lessons = {}, setAt = {};
     for (const [id, st] of Object.entries(obj(s.srs))) {
       const e = {};
       for (const [k, v] of Object.entries(obj(st))) if (/^[a-z]+$/.test(k) && Number.isFinite(+v) && v !== null) e[k] = +v;
-      if (Object.keys(e).length && id !== "__proto__") srs[id] = { r: 0, i: 0, e: 2.5, l: 0, n: 0, d: 0, ...e };
+      if (Object.keys(e).length && id !== "__proto__") srs[id] = { r: 0, i: 0, e: 2.5, l: 0, n: 0, d: 0, ...e, m: e.m ?? e.last ?? 0 };
     }
-    for (const [day, d] of Object.entries(obj(s.log))) if (/^\d{4}-\d{2}-\d{2}$/.test(day))
-      log[day] = { n: num(obj(d).n, 0, 1e6, 0), ok: num(obj(d).ok, 0, 1e6, 0), nw: num(obj(d).nw, 0, 1e6, 0) };
+    const slots = s.logs !== undefined ? obj(s.logs) : { legacy: s.log };
+    for (const [slot, days] of Object.entries(slots)) if (/^(legacy|[a-z0-9]{8,32})$/.test(slot)) logs[slot] = cleanDays(days);
     for (const [id, t] of Object.entries(obj(s.lessons))) if (Number.isFinite(+t) && t && id !== "__proto__") lessons[id] = +t;
+    for (const k of SYNCED) setAt[k] = num(obj(s.setAt)[k], 0, 1e15, 0);
+    const ep = obj(s.epoch);
+    const epoch = typeof ep.id === "string" && /^[a-z0-9]{0,32}$/.test(ep.id) && typeof ep.t === "number" && Number.isFinite(ep.t) && ep.t >= 0
+      ? { id: ep.id, t: ep.t } : { id: "", t: 0 };
     const st = obj(s.settings), D = defaults;
     const ts = Array.isArray(st.tenses) ? tenses.filter((t) => st.tenses.includes(t)) : [];
-    return { srs, log, lessons, settings: {
+    return { v: V, epoch, srs, logs, lessons, settings: {
       newPerDay: num(st.newPerDay, 0, 100, D.newPerDay), sessionSize: num(st.sessionSize, 5, 100, D.sessionSize),
       voice: typeof st.voice === "string" ? st.voice : D.voice, voiceQc: typeof st.voiceQc === "string" ? st.voiceQc : D.voiceQc,
       accent: ["fr", "qc"].includes(st.accent) ? st.accent : D.accent, rate: num(st.rate, 0.5, 1.2, D.rate),
       autoplay: typeof st.autoplay === "boolean" ? st.autoplay : D.autoplay, tenses: ts.length ? ts : D.tenses,
       theme: ["auto", "light", "dark"].includes(st.theme) ? st.theme : D.theme,
-    } };
+    }, setAt };
   }
 
-  root.Core = { cleanState, TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
+  // A clock that never goes backwards: later than every stamp already in the state.
+  function stamp(s, now = Date.now()) {
+    let hi = obj(obj(s).epoch).t || 0;
+    for (const c of Object.values(obj(obj(s).srs))) hi = Math.max(hi, obj(c).m || 0);
+    for (const t of Object.values(obj(obj(s).setAt))) hi = Math.max(hi, +t || 0);
+    for (const t of Object.values(obj(obj(s).lessons))) hi = Math.max(hi, +t || 0);
+    return Math.max(now, hi + 1);
+  }
+
+  const cmpStr = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+  const keys = (x, y) => [...new Set([...Object.keys(x), ...Object.keys(y)])].sort();
+  const pickCard = (x, y) => (x.m - y.m || x.n - y.n || cmpStr(JSON.stringify(x), JSON.stringify(y))) >= 0 ? x : y;
+
+  // Pure, idempotent, commutative and associative (on syncView). Device-only settings come from a (this device).
+  function merge(a, b) {
+    const local = {};
+    for (const k of DEVICE_ONLY) local[k] = a.settings[k];
+    const ec = a.epoch.t - b.epoch.t || cmpStr(a.epoch.id, b.epoch.id);
+    if (ec) {
+      const w = JSON.parse(JSON.stringify(ec > 0 ? a : b));
+      return { ...w, settings: { ...w.settings, ...local } };
+    }
+    const srs = {}, logs = {}, lessons = {}, settings = {}, setAt = {};
+    for (const id of keys(a.srs, b.srs)) srs[id] = { ...(!a.srs[id] ? b.srs[id] : !b.srs[id] ? a.srs[id] : pickCard(a.srs[id], b.srs[id])) };
+    for (const slot of keys(a.logs, b.logs)) {
+      const x = a.logs[slot] || {}, y = b.logs[slot] || {};
+      logs[slot] = {};
+      for (const day of keys(x, y)) {
+        const p = x[day] || {}, q = y[day] || {};
+        logs[slot][day] = { n: Math.max(p.n || 0, q.n || 0), ok: Math.max(p.ok || 0, q.ok || 0), nw: Math.max(p.nw || 0, q.nw || 0) };
+      }
+    }
+    for (const id of keys(a.lessons, b.lessons)) lessons[id] = Math.max(a.lessons[id] || 0, b.lessons[id] || 0);
+    for (const k of SYNCED) {
+      const ta = a.setAt[k] || 0, tb = b.setAt[k] || 0;
+      const useA = (ta - tb || cmpStr(JSON.stringify(a.settings[k]), JSON.stringify(b.settings[k]))) >= 0;
+      settings[k] = JSON.parse(JSON.stringify((useA ? a : b).settings[k]));
+      setAt[k] = Math.max(ta, tb);
+    }
+    return { v: V, epoch: { ...a.epoch }, srs, logs, lessons, settings: { ...settings, ...local }, setAt };
+  }
+
+  // What gets pushed and compared: no device-only settings, no derived log.
+  function syncView(s) {
+    const c = JSON.parse(JSON.stringify({ ...s, log: undefined }));
+    for (const k of DEVICE_ONLY) delete c.settings[k];
+    return c;
+  }
+  function sumLogs(logs) {
+    const out = {};
+    for (const days of Object.values(obj(logs))) for (const [day, d] of Object.entries(days)) {
+      const o = (out[day] ||= { n: 0, ok: 0, nw: 0 });
+      o.n += d.n; o.ok += d.ok; o.nw += d.nw;
+    }
+    return out;
+  }
+  const isEmpty = (s) => !Object.keys(s.srs).length && !Object.keys(s.lessons).length &&
+    Object.values(s.logs).every((days) => Object.values(days).every((d) => !d.n && !d.ok && !d.nw));
+  // "Upload again" after an erase elsewhere: move into the new epoch, stamped so it wins there.
+  function restamp(s, epoch, now = Date.now()) {
+    const r = JSON.parse(JSON.stringify({ ...s, log: undefined }));
+    r.epoch = { ...epoch };
+    const t = stamp(r, now);
+    for (const c of Object.values(r.srs)) c.m = t;
+    for (const k of SYNCED) r.setAt[k] = t;
+    return r;
+  }
+  function emptyState(defaults, epoch) {
+    const setAt = {};
+    for (const k of SYNCED) setAt[k] = 0;
+    return { v: V, epoch: { ...epoch }, srs: {}, logs: {}, lessons: {}, settings: JSON.parse(JSON.stringify(defaults)), setAt };
+  }
+  // FNV-1a 32-bit, as hex
+  function hash(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x01000193) >>> 0;
+    return h.toString(16).padStart(8, "0");
+  }
+
+  root.Core = { cleanState, V, SYNCED, DEVICE_ONLY, tooNew, stamp, merge, syncView, sumLogs, isEmpty, restamp, emptyState, hash, TENSES, SUBJ, parseVerb, conjugate, grade, diff, norm, loose, schedule, interleave, shuffle, parseCloze, fillCloze, stripAccents, DAY };
 })(typeof window !== "undefined" ? window : globalThis);
