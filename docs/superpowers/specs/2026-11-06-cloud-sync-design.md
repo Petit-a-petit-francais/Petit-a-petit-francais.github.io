@@ -6,7 +6,7 @@ Issue #22 · 6 November 2026 · revised after review (PR #23)
 
 Parsa studies on a phone and a laptop, and progress made on one doesn't show up on the other. Today everything (SRS cards, daily log, finished lessons, settings) is one JSON blob in `localStorage` under `cahier-fr-v1` ([app.js](../../../app.js) `load`/`save`).
 
-This feature adds optional sign-in so that progress syncs through **the learner's own** Google Drive or iCloud. There is no server and no database of ours, and the developer can never see anyone's data.
+This feature adds optional sign-in so that progress syncs through **the learner's own** Google Drive or iCloud. No database of ours ever holds progress, and the developer can never see anyone's data. The one small exception, a stateless helper that renews Google sign-ins, never touches progress.
 
 ## Goals
 
@@ -18,7 +18,7 @@ This feature adds optional sign-in so that progress syncs through **the learner'
 
 ## Non-goals
 
-- Any server, backend, or database we run. GitHub Pages stays the only host.
+- Any server, backend, or database that **stores or sees learner data**. GitHub Pages stays the host for the site. The only exception is a stateless Google token helper, Parsa's choice, described under Providers.
 - Accounts, profiles, sharing, leaderboards, or anything social.
 - Real-time sync between two devices open at the same moment.
 - Syncing voice choice (`voice`, `voiceQc`) and speech speed (`rate`). Those depend on the device.
@@ -52,26 +52,39 @@ This feature adds optional sign-in so that progress syncs through **the learner'
 
 ### Providers
 
-**Google**: Google Identity Services token client (`accounts.google.com/gsi/client`) with the `drive.appdata` scope. One file, `progress.json`, in the hidden `appDataFolder`, read and written with Drive v3 REST and `fetch`.
+**Google**: Google Identity Services **code client** (`accounts.google.com/gsi/client`, `initCodeClient`, `ux_mode: "popup"`) with the `drive.appdata` scope. One file, `progress.json`, in the hidden `appDataFolder`, read and written with Drive v3 REST and `fetch`.
 
-- **Tokens:** a browser-only app gets a token that lasts about an hour, with no refresh token, and a renewal opens Google's popup, which needs a tap. To keep this out of the way:
-  - Keep the token **in memory only**, never in `localStorage`.
-  - When it has expired, renew it on the learner's **first tap after opening** the site (for example on Start), with `prompt: ""` and the account as `login_hint`. Once consent has been given, Google usually closes the popup without asking anything.
-  - Changes made while the token is expired wait and push after the next renewal.
-  - Show "Reconnect Google" only if a renewal actually needs the learner's input.
-  - Be honest that Google sync usually means one quick popup per visit. Don't promise "fully automatic" in the UI copy.
+- **Why a token helper:** Google's docs state that a browser-only app gets only short-lived access tokens (about an hour). Renewing them needs "a user-driven event such as a button press", and long-lived refresh tokens need a backend. Parsa chose a **tiny token helper** so Google stays signed in like Apple, instead of a popup on every visit.
+- **The token helper:** one Cloudflare Worker on the free tier, in Parsa's Cloudflare account, in this repo under `token-helper/`. It holds the Google client secret as a Worker secret. It has exactly two endpoints:
+  - `POST /exchange {code}` calls Google's token endpoint with `redirect_uri: "postmessage"` and returns `{access_token, expires_in, refresh_token}`.
+  - `POST /refresh {refresh_token}` returns `{access_token, expires_in}`.
+  - **It stores nothing, logs nothing, and never sees progress data.** It never calls Drive.
+  - CORS allows only the site's origin, it accepts only those two requests, and it applies Cloudflare's basic rate limit.
+  - About 30 lines. It isn't part of the static site, and it's deployed by hand with `wrangler`.
+- **Tokens in the browser:**
+  - The **access token stays in memory only**.
+  - The **refresh token** is kept in `localStorage` (`cahier-fr-google`). It's limited to the app's own hidden Drive folder. That's an accepted risk: the site loads no third-party scripts for people who aren't signed in, and every displayed value goes through `esc`.
+  - Renew about 5 minutes before expiry, silently through the helper.
+  - If the helper is unreachable, or Google rejects the refresh token (revoked, or unused for 6 months), show "Reconnect Google". Changes made meanwhile wait and push later.
+- **Sign out** of Google revokes the refresh token at `https://oauth2.googleapis.com/revoke`, straight from the browser, then deletes it locally.
+- **If Google returns no refresh token** (Google only gives one on first consent), request the code again with `prompt: "consent"`.
 - **Duplicate files:** Drive allows several files with the same name, so two devices syncing for the first time at once can each create `progress.json`. On every pull, list all files with that name, merge them all, keep the oldest one, and delete the extras after a successful write.
 - **Account label:** use Drive `about.get` (`user.emailAddress` / `displayName`) if the `drive.appdata` scope allows it. Otherwise label it just "Google Drive". Don't add scopes just for the label.
 
-**Apple**: CloudKit JS (`cdn.apple-cloudkit.com/ck/2/cloudkit.js`), a container in Parsa's Apple Developer account, the **private** database, and one record (type `Progress`, fixed record name) holding the JSON. Apple's sign-in button is rendered into a container that we place ourselves. Set `persist: true`. Saves are conditional on the record change tag, and a conflict is handled by re-pulling, merging and retrying.
+**Apple**: CloudKit JS (`cdn.apple-cloudkit.com/ck/2/cloudkit.js`), a container in Parsa's Apple Developer account, the **private** database, and one record (type `Progress`, fixed record name) holding the JSON. Apple's sign-in button is rendered into a container that we place ourselves. Set `persist: true`, and pass an `authTokenStore` (`putToken`/`getToken`, documented in `CloudKit.CloudKitConfig`) backed by `localStorage`. The session token then lives on our own origin instead of in Apple's cookies, which should avoid the "not remembered after reload" reports in Chrome. CloudKit JS requires a container with web services enabled, created in the developer portal or Xcode. Saves are conditional on the record change tag, and a conflict is handled by re-pulling, merging and retrying.
 
 - Developers report CloudKit/Apple sign-in hanging or failing in non-Safari browsers. Show the **Apple button first on Apple devices and Google first elsewhere**. If Apple sign-in fails, say so plainly and suggest Google.
 
 **Setup Parsa does once** (the builder writes a checklist in the README):
-- Google Cloud OAuth client ID (Web) for origin `https://petit-a-petit-francais.github.io`, with consent screen and publishing. The builder confirms what `drive.appdata` verification needs and tells Parsa if it costs money or takes review time.
+- **Google Cloud:** an OAuth client of type Web, for origin `https://petit-a-petit-francais.github.io`, with consent screen and publishing.
+  - Google's docs class `drive.appdata` as **non-sensitive**, so no demo video or security assessment is needed. Brand verification still applies.
+  - Developers report that Google won't verify a `github.io` address, because GitHub owns that domain. **Parsa's call: try github.io first.** Buy a custom domain (about $10–15 a year, pointed at GitHub Pages) only if Google rejects it.
+- **Cloudflare:** a free account, deploy `token-helper/`, and set the client secret as a Worker secret.
 - CloudKit container, web API token with that allowed origin, and the `Progress` schema deployed to production.
 
-The client ID, container ID and API token are public identifiers, so committing them is fine.
+The client ID, container ID and API token are public identifiers, so committing them is fine. **The client secret is not public.** It lives only as a Cloudflare Worker secret and is never committed.
+
+**If the site later moves to a custom domain:** browser storage belongs to each web address, so learners would open the new address and find no progress. Sync handles this: sign in on the old address, then on the new one. The old address redirects with a short notice saying so. Export/import is the fallback for people who never signed in.
 
 ### Loading only when needed
 
@@ -167,6 +180,7 @@ All of it uses the existing visual language of [style.css](../../../style.css).
 Add a "Syncing (optional)" section:
 - If you sign in, a copy of your progress is stored in your own Google Drive app folder or iCloud private database, under Google's or Apple's privacy policy, and we can't read it.
 - Google and Apple scripts load only if you use sign-in.
+- For Google, sign-in tokens (never progress) pass through our small token helper on Cloudflare, which stores and logs nothing. Cloudflare sees the request's IP address, as GitHub does for page loads.
 - How to delete the cloud copy.
 
 Also update "Last updated" and the "no accounts" line in the intro.
