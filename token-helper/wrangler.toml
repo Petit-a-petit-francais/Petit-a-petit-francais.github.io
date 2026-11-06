@@ -1,0 +1,18 @@
+# Google token helper for cloud sync. Deploy by hand: see README ("Cloud sync setup").
+# The client secret is never in this repo: `npx wrangler secret put GOOGLE_CLIENT_SECRET`.
+name = "petitfrench-token-helper"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+GOOGLE_CLIENT_ID = "305235627631-togsnctsom0ba7ctcdsit792jnnd24c7.apps.googleusercontent.com"
+ALLOWED_ORIGIN = "https://petit-a-petit-francais.github.io, https://petitfrench.parsakp.com"
+
+# logs nothing
+[observability]
+enabled = false
+
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "2201"
+simple = { limit = 30, period = 60 }

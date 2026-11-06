@@ -18,9 +18,10 @@ python3 -m http.server 8000
 
 ```sh
 node test.mjs
+node token-helper/test.mjs
 ```
 
-Checks the conjugation engine, grading, the scheduler, and that every sentence, verb, word and lesson in the data is valid.
+The first checks the conjugation engine, grading, the scheduler, saved-progress merging, the sync engine, and that every sentence, verb, word and lesson in the data is valid. The second checks the Google token helper.
 
 ## Files
 
