@@ -5,19 +5,74 @@
   const { TENSES } = Core;
   const TENSE_ORDER = ["pres", "pc", "fp", "pr", "impe", "imp", "fut", "cond"];
   const TENSE_EN = { pres: "Present", pc: "Passé composé", fp: "Near future", pr: "Recent past", impe: "Imperative", imp: "Imparfait", fut: "Future", cond: "Conditional" };
-  const KEY = "cahier-fr-v1";
+  const KEY = "cahier-fr-v2", V1 = "cahier-fr-v1", V1_MERGED = "cahier-fr-v1-merged", V1_RETIRED = "cahier-fr-v1-retired", BACKUP = "cahier-fr-backup";
   const DEFAULTS = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: TENSE_ORDER, theme: "auto" };
 
   // ---------- storage ----------
+  const ls = {
+    get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }, // storage full or blocked
+    del: (k) => { try { localStorage.removeItem(k); } catch (e) { /* blocked */ } },
+  };
+  const clean = (x) => Core.cleanState(x, DEFAULTS, TENSE_ORDER);
+  const parse = (str) => { try { const x = JSON.parse(str); return x && typeof x === "object" ? x : null; } catch (e) { return null; } };
+  const DEVICE = (() => {
+    let d = ls.get("cahier-fr-device");
+    if (!/^[a-z0-9]{16}$/.test(d || "")) {
+      d = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => "abcdefghijklmnopqrstuvwxyz0123456789"[x % 36]).join("");
+      ls.set("cahier-fr-device", d);
+    }
+    return d;
+  })();
+  const App = { DEVICE, onSaved: null };
+  const stored = (st) => JSON.stringify({ ...st, log: undefined });
   function load() {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && typeof s === "object") return Core.cleanState(s, DEFAULTS, TENSE_ORDER);
-    } catch (e) { /* private mode or corrupt data: start fresh */ }
-    return { srs: {}, log: {}, lessons: {}, settings: { ...DEFAULTS } };
+    const raw = parse(ls.get(KEY));
+    // shortcut: a v2 key written by a newer version is cleaned like any other (its unknown fields are dropped), upgrade when v3 exists
+    let st = raw ? clean(raw) : null, changed = false;
+    const rawV1 = ls.get(V1);
+    // an old tab may still write v1: merge it again only when it changed, and never after an erase
+    if (rawV1 && !ls.get(V1_RETIRED) && Core.hash(rawV1) !== ls.get(V1_MERGED)) {
+      const v1 = parse(rawV1);
+      if (v1) {
+        if (st) ls.set(BACKUP, stored(st));
+        st = st ? Core.merge(st, clean(v1)) : clean(v1);
+        changed = true;
+      }
+      ls.set(V1_MERGED, Core.hash(rawV1));
+    }
+    st ||= Core.emptyState(DEFAULTS, { id: "", t: 0 });
+    st.log = Core.sumLogs(st.logs);
+    if (changed) ls.set(KEY, stored(st));
+    return st;
   }
   let S = load();
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full or blocked */ } };
+  const save = () => {
+    const ok = ls.set(KEY, stored(S));
+    if (ok && App.onSaved) App.onSaved();
+    return ok;
+  };
+  // Replace the whole state (sync, import, erase): back up the old one first. False if it couldn't be saved.
+  function replaceState(next, why) {
+    ls.set(BACKUP, stored(S));
+    S = next;
+    S.log = Core.sumLogs(S.logs);
+    const ok = save();
+    applyTheme();
+    if (!session) route(); // never yank the learner out of a running session
+    else renderNav();
+    return ok;
+  }
+  // another tab of this site saved: take its progress in (it already saved, so don't save again)
+  window.addEventListener("storage", (e) => {
+    if (e.key !== KEY) return;
+    const o = parse(e.newValue);
+    if (!o || Core.tooNew(o)) return;
+    S = Core.merge(S, clean(o));
+    S.log = Core.sumLogs(S.logs);
+  });
+  Object.assign(App, { getState: () => S, replaceState });
+  window.App = App;
 
   const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -134,11 +189,14 @@
     (pair ? `<button class="say alt" type="button" data-say="${esc(text)}" data-accent="${other()}" aria-label="${label} with a ${ACCENTS[other()].name} accent: ${esc(text)}" title="${label} (${ACCENTS[other()].name})">${other().toUpperCase()}</button>` : "");
 
   // ---------- progress & stats ----------
+  const dayLog = () => ((S.logs[DEVICE] ||= {})[today()] ||= { n: 0, ok: 0, nw: 0 });
+  const review = (id, prev, score) => (S.srs[id] = { ...Core.schedule(prev, score), m: Core.stamp(S) });
   function logResult(score, wasNew) {
-    const d = (S.log[today()] ||= { n: 0, ok: 0, nw: 0 });
+    const d = dayLog();
     d.n++;
     if (score > 0) d.ok++;
     if (wasNew) d.nw++;
+    S.log = Core.sumLogs(S.logs);
   }
   function streak() {
     let n = 0;
@@ -310,7 +368,7 @@
     main.querySelector(".reveal-en")?.remove();
 
     const prev = S.srs[it.id];
-    S.srs[it.id] = Core.schedule(prev, score);
+    review(it.id, prev, score);
     logResult(score, !prev);
     save();
     const full = card.full(res.map((r) => r.best));
@@ -351,8 +409,8 @@
   // the grader was wrong (a valid alternative, a typo the learner disputes, etc.)
   function override() {
     const s = session, { it, prev } = s.last;
-    S.srs[it.id] = Core.schedule(prev, 2);
-    if (s.last.score === 0) S.log[today()].ok++;
+    review(it.id, prev, 2);
+    if (s.last.score === 0) { dayLog().ok++; S.log = Core.sumLogs(S.logs); }
     s.results[s.results.length - 1].score = 2;
     if (s.requeued[it.id]) {
       const k = s.queue.indexOf(it, s.i + 1);
@@ -378,7 +436,7 @@
     const all = [...first.values()];
     const ok = all.filter((r) => r.score > 0).length;
     const missed = all.filter((r) => r.score === 0);
-    if (s.lesson) { S.lessons[s.lesson] = Date.now(); save(); }
+    if (s.lesson) { S.lessons[s.lesson] = Core.stamp(S); save(); }
     session = null;
     const pct = Math.round((ok / all.length) * 100);
     main.innerHTML = `<div class="done">
@@ -749,7 +807,12 @@
         <label class="btn" for="import">Import progress</label><input type="file" id="import" accept="application/json" hidden>
         <button class="btn ghost" type="button" id="reset" style="color:var(--danger)">Erase all progress</button></p>
         <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div></div>`;
-    const set = (k, v) => { st[k] = v; save(); renderNav(); };
+    const set = (k, v) => {
+      S.settings[k] = v;
+      if (Core.SYNCED.includes(k)) S.setAt[k] = Core.stamp(S);
+      save();
+      renderNav();
+    };
     const num = (id, lo, hi) => (document.getElementById(id).onchange = (e) => { const v = Math.min(hi, Math.max(lo, +e.target.value || lo)); e.target.value = v; set(id, v); });
     num("newPerDay", 0, 100);
     num("sessionSize", 5, 100);
@@ -766,7 +829,7 @@
     const msg = (t) => (document.getElementById("msg").textContent = t);
     document.getElementById("export").onclick = () => {
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: "application/json" }));
+      a.href = URL.createObjectURL(new Blob([JSON.stringify({ ...S, log: undefined }, null, 1)], { type: "application/json" }));
       a.download = `french-progress-${today()}.json`;
       a.click();
       msg("Progress exported.");
@@ -774,18 +837,20 @@
     document.getElementById("import").onchange = async (e) => {
       try {
         const data = JSON.parse(await e.target.files[0].text());
-        if (!data || typeof data.srs !== "object" || typeof data.log !== "object") throw new Error("shape");
-        S = Core.cleanState(data, DEFAULTS, TENSE_ORDER);
-        save();
-        msg(`Imported ${Object.keys(S.srs).length} cards.`);
+        if (Core.tooNew(data)) return msg("A newer version of the site saved your progress. Reload to update.");
+        if (!data || typeof data.srs !== "object" || (typeof data.log !== "object" && typeof data.logs !== "object")) throw new Error("shape");
+        const n = Object.keys(clean(data).srs).length;
+        if (!replaceState(Core.merge(S, clean(data)), "import")) return msg("Couldn't save on this device.");
+        msg(`Imported ${n} cards.`);
       } catch (err) {
         msg("That file isn't a progress export from this site. Nothing was changed.");
       }
     };
     document.getElementById("reset").onclick = () => {
       if (!confirm("Erase all progress, lessons and statistics? Export a backup first if you want to keep them.")) return;
-      S = { srs: {}, log: {}, lessons: {}, settings: { ...DEFAULTS } };
-      save();
+      replaceState(Core.emptyState(DEFAULTS, S.epoch), "erase"); // backs up first
+      ls.del(V1);
+      ls.set(V1_RETIRED, "1");
       msg("All progress erased.");
     };
   }
