@@ -403,3 +403,118 @@ if (existsSync(here("sync.js"))) vm.runInContext(readFileSync(here("sync.js"), "
   }
 }
 console.log("ok — sync engine");
+
+// Google Drive provider, against a fake Drive and token helper
+{
+  const files = {}; let nextId = 1, calls = [], refreshReply = () => ({ status: 200, body: { access_token: "at", expires_in: 3599 } }), down = null, drive401 = 0;
+  const sets = [];
+  const store = {};
+  const g = { console, URLSearchParams, encodeURIComponent, setTimeout, Promise,
+    localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (sets.push(k), (store[k] = String(v))), removeItem: (k) => delete store[k] } };
+  g.window = g;
+  const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => (typeof body === "string" ? JSON.parse(body) : body), text: async () => (typeof body === "string" ? body : JSON.stringify(body)) });
+  g.fetch = async (url, init = {}) => {
+    const method = init.method || "GET", h = init.headers || {};
+    calls.push({ url, method, auth: h.Authorization, body: init.body });
+    if (down) { const d = down; if (d === "net") throw new TypeError("Failed to fetch"); return res(d, { error: { message: "x" } }); }
+    if (url.startsWith("https://helper.test/")) {
+      assert.equal(h["X-Requested-With"], "XmlHttpRequest");
+      const b = JSON.parse(init.body);
+      if (url.endsWith("/exchange")) return res(200, b.code === "c-consent" ? { access_token: "at", expires_in: 3599, refresh_token: "rt2" } : { access_token: "at", expires_in: 3599 });
+      const r = refreshReply(); return res(r.status, r.body);
+    }
+    if (url === "https://oauth2.googleapis.com/revoke") return res(200, {});
+    if (url.includes("/about?")) return res(200, { user: { displayName: "Parsa", emailAddress: "p@example.com" } });
+    if (drive401 > 0) { drive401--; return res(401, { error: { message: "expired" } }); }
+    let m;
+    if ((m = url.match(/^https:\/\/www\.googleapis\.com\/drive\/v3\/files\?spaces=appDataFolder&q=([^&]*)/))) {
+      const names = [...decodeURIComponent(m[1]).matchAll(/name='([^']+)'/g)].map((x) => x[1]);
+      return res(200, { files: Object.entries(files).filter(([, f]) => names.includes(f.name)).sort((a, b) => a[1].t - b[1].t).map(([id, f]) => ({ id, createdTime: String(f.t) })) });
+    }
+    if ((m = url.match(/^https:\/\/www\.googleapis\.com\/drive\/v3\/files\/([^?]+)\?alt=media$/))) return files[m[1]] ? res(200, files[m[1]].content) : res(404, {});
+    if ((m = url.match(/^https:\/\/www\.googleapis\.com\/upload\/drive\/v3\/files\/([^?]+)\?uploadType=media$/)) && method === "PATCH") { files[m[1]].content = init.body; return res(200, { id: m[1] }); }
+    if (url === "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart" && method === "POST") {
+      const meta = JSON.parse(init.body.match(/\r\n\r\n(\{.*?\})\r\n/s)[1]), content = init.body.split(/\r\n\r\n/)[2].replace(/\r\n--[^\r\n]*--\r\n$/, "");
+      assert.equal(JSON.stringify(meta.parents), JSON.stringify(["appDataFolder"]));
+      const id = "f" + nextId++; files[id] = { name: meta.name, content, t: nextId }; return res(200, { id });
+    }
+    if ((m = url.match(/^https:\/\/www\.googleapis\.com\/drive\/v3\/files\/([^?]+)$/)) && method === "DELETE") { delete files[m[1]]; return res(204, ""); }
+    throw new Error("unexpected request " + method + " " + url);
+  };
+  g.google = { accounts: { oauth2: { initCodeClient: (o) => ({ requestCode: () => { g.lastPrompt = o.prompt; setTimeout(() => o.callback({ code: o.prompt === "consent" ? "c-consent" : "c1" })); } }) } } };
+  vm.createContext(g);
+  for (const f of ["sync-config.js", "sync-google.js"]) if (existsSync(here(f))) vm.runInContext(readFileSync(here(f), "utf8"), g);
+  if (g.SYNC_CONFIG) g.SYNC_CONFIG.TOKEN_HELPER_URL = "https://helper.test";
+  const SG = g.SyncGoogle;
+  assert.ok(SG, "SyncGoogle is not defined");
+  assert.equal(SG.restore(), null);
+  // sign in: no refresh token the first time, so it asks once more with the consent screen
+  const p = await SG.signIn();
+  assert.equal(g.lastPrompt, "consent");
+  assert.equal(store["cahier-fr-google"], "rt2");
+  assert.equal(p.id, "google");
+  // first push creates progress.json in the app folder
+  assert.equal((await p.pull()).copies.length, 0);
+  await p.push('{"a":1}', []);
+  let copies = (await p.pull()).copies;
+  assert.equal(copies.length, 1);
+  assert.equal(copies[0].text, '{"a":1}');
+  assert.ok(calls.some((c) => c.url === "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D'progress.json'&fields=files(id,createdTime)&orderBy=createdTime"));
+  // a duplicate from another device: push keeps the oldest, backs it up, deletes the rest
+  files.dup = { name: "progress.json", content: '{"b":1}', t: 999 };
+  copies = (await p.pull()).copies;
+  assert.equal(copies.length, 2);
+  await p.push('{"a":1,"b":1}', copies.map((c) => c.ref));
+  const byName = (n) => Object.values(files).filter((f) => f.name === n);
+  assert.equal(byName("progress.json").length, 1);
+  assert.equal(byName("progress.json")[0].content, '{"a":1,"b":1}');
+  assert.equal(byName("progress.prev.json")[0].content, '{"a":1}');
+  await p.push('{"c":1}', [(await p.pull()).copies[0].ref]);
+  assert.equal(byName("progress.prev.json").length, 1, "one backup, updated in place");
+  assert.equal(byName("progress.prev.json")[0].content, '{"a":1,"b":1}');
+  // the access token renews within 5 minutes of expiry and never reaches localStorage
+  refreshReply = () => ({ status: 200, body: { access_token: "short", expires_in: 200 } });
+  const p2 = SG.restore();
+  calls = [];
+  await p2.pull(); await p2.pull();
+  assert.equal(calls.filter((c) => c.url.endsWith("/refresh")).length, calls.filter((c) => c.url.startsWith("https://www.googleapis.com/")).length, "a token this close to expiry is renewed before each call");
+  assert.ok(sets.every((k) => k === "cahier-fr-google"), "only the refresh token is stored");
+  assert.ok(!Object.values(store).includes("short") && !Object.values(store).includes("at"));
+  // Review Focus 4: error codes
+  const code = async (fn) => { try { await fn(); return "none"; } catch (e) { return e.code; } };
+  refreshReply = () => ({ status: 400, body: { error: "invalid_grant" } });
+  assert.equal(await code(() => SG.restore().pull()), "auth");
+  refreshReply = () => ({ status: 429, body: { error: "rate_limited" } });
+  assert.equal(await code(() => SG.restore().pull()), "offline");
+  refreshReply = () => ({ status: 503, body: { error: "upstream" } });
+  assert.equal(await code(() => SG.restore().pull()), "offline");
+  refreshReply = () => ({ status: 200, body: { access_token: "at", expires_in: 3599 } });
+  down = "net"; assert.equal(await code(() => SG.restore().pull()), "offline");
+  down = null;
+  const p3 = SG.restore(); await p3.pull();
+  down = 500; assert.equal(await code(() => p3.pull()), "offline");
+  down = 429; assert.equal(await code(() => p3.pull()), "offline");
+  down = null;
+  calls = []; drive401 = 1;
+  assert.equal(await code(() => p3.pull()), "none", "one 401 refreshes and retries");
+  assert.equal(calls.filter((c) => c.url.endsWith("/refresh")).length, 1);
+  drive401 = 2;
+  assert.equal(await code(() => p3.pull()), "auth");
+  drive401 = 0;
+  // label
+  assert.equal(await p3.loadLabel(), "Parsa (p@example.com)");
+  down = 500; assert.equal(await SG.restore().loadLabel(), "Google Drive"); down = null;
+  // remove everything, sign out without revoking, disconnect revokes
+  await p3.removeAll();
+  assert.equal(byName("progress.json").length + byName("progress.prev.json").length, 0);
+  calls = [];
+  await p3.signOut();
+  assert.equal(store["cahier-fr-google"], undefined);
+  assert.ok(!calls.some((c) => c.url.includes("revoke")));
+  store["cahier-fr-google"] = "rt2";
+  await SG.disconnectAll();
+  const rv = calls.find((c) => c.url === "https://oauth2.googleapis.com/revoke");
+  assert.ok(rv && rv.method === "POST" && String(rv.body).includes("token=rt2"));
+  assert.equal(store["cahier-fr-google"], undefined);
+}
+console.log("ok — google provider");
