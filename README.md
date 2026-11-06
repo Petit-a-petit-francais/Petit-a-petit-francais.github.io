@@ -4,7 +4,7 @@ A French practice app for A1–A2 learners: lessons, spaced-repetition review, v
 
 **Use it:** https://petit-a-petit-francais.github.io/
 
-It is a static site with no build step and no server. Progress is saved in the browser (Settings › Export progress to back it up). See the [privacy policy](privacy.html).
+It is a static site with no build step and no server. Progress is saved in the browser (Settings › Export progress to back it up). Learners can optionally sign in with Google or Apple to sync it across devices, through their own Google Drive or iCloud. See the [privacy policy](privacy.html).
 
 ## Run locally
 
@@ -29,7 +29,22 @@ The first checks the conjugation engine, grading, the scheduler, saved-progress 
 |---|---|
 | `core.js` | Conjugation engine, grading, spaced-repetition scheduler |
 | `data.js`, `grammar_extra.js`, `vocab_extra.js` | Verbs, sentences, words, grammar sheets and the course units |
-| `app.js` | The app: routes, lessons, practice sessions, cheatsheets, settings |
+| `app.js` | The app: routes, lessons, practice sessions, cheatsheets, settings, the sync screens |
+| `sync.js` | Sync engine: pulls each linked cloud, merges, saves, pushes |
+| `sync-config.js` | Public sign-in IDs (Google client ID, CloudKit container and API token, token helper URL) |
+| `sync-google.js`, `sync-apple.js` | Google Drive and iCloud providers, loaded only when someone signs in |
+| `token-helper/` | A small Cloudflare Worker that holds the Google client secret and swaps sign-in codes for tokens |
+
+## Cloud sync setup
+
+Sync is optional for learners and needs these accounts, set up once:
+
+1. **Google Cloud:** a project with the Drive API enabled, and an OAuth client of type **Web** whose JavaScript origins are `https://petit-a-petit-francais.github.io` and `https://petitfrench.parsakp.com`. The consent screen asks only for the `drive.appdata` scope. Put the client ID in `sync-config.js` and `token-helper/wrangler.toml`.
+2. **Apple:** an iCloud container (`iCloud.com.parsakp.petitfrench`) with a record type `Progress` that has the fields `data` (String) and `blob` (Asset). Add a CloudKit web API token with the "postMessage" sign-in callback, allowed for the same two origins, and put it in `sync-config.js`. CloudKit rejects `http://localhost`, so test Apple sign-in on an allowed `https` origin.
+3. **Token helper:** `cd token-helper && npx wrangler deploy`, then `npx wrangler secret put GOOGLE_CLIENT_SECRET`. The secret is never committed. Put the Worker's URL in `sync-config.js` and in the `connect-src` of the security rule in `index.html`.
+4. **Before inviting learners:**
+   - Deploy the CloudKit schema to **Production** and set `CK_ENV` to `"production"` in `sync-config.js`.
+   - Publish the Google consent screen **In production**. While it's in Testing, Google expires refresh tokens after 7 days, so everyone would have to reconnect weekly.
 
 ## Licence
 

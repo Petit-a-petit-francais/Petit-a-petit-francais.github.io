@@ -327,7 +327,7 @@
         <a class="icon-btn" href="#/settings" aria-label="Settings (voice and accent)" title="Settings (voice and accent)">${icon("settings")}</a></div>
       <div class="session-body">
         <div class="q-label">${esc(card.label)}${isNew ? ' <span class="badge blue">New</span>' : ""}</div>
-        <form id="card" autocomplete="off" onsubmit="return false">${card.body}</form>
+        <form id="card" autocomplete="off">${card.body}</form>
         ${accentBar()}
       </div>
       <div class="bar" id="bar"><div class="bar-inner">
@@ -574,7 +574,7 @@
     dialog.showModal();
     document.getElementById("dialog-body").scrollTop = 0;
   }
-  const openLessonDialog = (l) => openDialog(l.title, lessonBody(l, true) + `<p style="margin-top:20px"><button class="btn primary" type="button" onclick="this.closest('dialog').close()">Back to practice</button></p>`);
+  const openLessonDialog = (l) => openDialog(l.title, lessonBody(l, true) + `<p style="margin-top:20px"><button class="btn primary" type="button" data-close-dialog>Back to practice</button></p>`);
 
   // ---------- pages ----------
   function pageHome() {
@@ -731,7 +731,7 @@
     }
     main.innerHTML = `<div class="page">
       <div class="page-head"><div><h1>Cheatsheets</h1><p class="lead" style="margin:0">Everything from your course on one page per area. Search it, or print it.</p></div>
-        <button class="btn no-print" type="button" onclick="window.print()">${icon("print")} Print</button></div>
+        <button class="btn no-print" type="button" data-print>${icon("print")} Print</button></div>
       <nav class="tabs no-print" aria-label="Cheatsheet">${tabs.map(([k, n]) => `<a href="#/cheatsheets/${k}" ${k === tab ? 'aria-current="page"' : ""}>${n}</a>`).join("")}</nav>
       <p class="no-print"><input type="search" id="find" placeholder="Search ${tab === "verbs" ? "verbs (e.g. prendre, to take)" : tab === "vocab" ? "words in French or English" : "rules (e.g. depuis, qui, au)"}" aria-label="Search this cheatsheet"></p>
       <p class="tiny" id="found" role="status"></p>
@@ -780,7 +780,7 @@
     main.querySelectorAll("[data-verb]").forEach((b) => (b.onclick = () => {
       const V = VERBS.find((v) => v.inf === b.dataset.verb);
       openDialog(`${V.inf} · ${V.en}`, `<p class="muted small">Auxiliary: ${V.aux === "e" ? "être" : "avoir"} · past participle: ${esc(V.pp)}</p>${conjTable(V, TENSE_ORDER)}
-        <p style="margin-top:16px"><a class="btn primary" href="#/drill?k=verb&v=${encodeURIComponent(V.inf)}" onclick="this.closest('dialog').close()">Practise this verb</a></p>`);
+        <p style="margin-top:16px"><a class="btn primary" href="#/drill?k=verb&v=${encodeURIComponent(V.inf)}" data-close-dialog>Practise this verb</a></p>`);
     }));
   }
 
@@ -1114,7 +1114,11 @@
     const sync = syncLinked().length ? overall() : "";
     document.getElementById("sidebar-foot").innerHTML = (sync ? `<a class="sync-ind" href="#/settings#sync" data-state="${{ Synced: "ok", "Syncing…": "busy", Offline: "off" }[sync] || "warn"}" aria-label="${sync}" title="${sync}">${icon("cloud")}</a>` : "") + `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b><span class="streak-word"> day streak</span></span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
   }
+  // the answer form only ever submits by Enter, which check() handles
+  document.addEventListener("submit", (e) => { if (e.target.id === "card") e.preventDefault(); });
   document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-close-dialog]")) dialog.close();
+    if (e.target.closest("[data-print]")) print();
     const b = e.target.closest("[data-say]");
     if (b) speak(b.dataset.say, b.dataset.rate ? +b.dataset.rate : undefined, b.dataset.accent);
     const r = e.target.closest(".reveal");
@@ -1172,5 +1176,6 @@
   window.addEventListener("hashchange", route);
   applyTheme();
   route();
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
   window.__cahier = { ITEMS, VERBS, LESSONS, state: () => S, session: () => session }; // handle for automated checks
 })();

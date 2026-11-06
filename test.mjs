@@ -611,3 +611,17 @@ console.log("ok — google provider");
   assert.equal(signOuts, 1);
 }
 console.log("ok — apple provider");
+
+// security rule: only our own scripts plus the two sign-in SDKs; no inline scripts or handlers to allow
+{
+  const html = readFileSync(here("index.html"), "utf8");
+  const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)?.[1];
+  assert.ok(csp, "index.html has no CSP meta");
+  const dir = Object.fromEntries(csp.split(";").map((d) => d.trim().split(/\s+/)).filter((d) => d[0]).map(([k, ...v]) => [k, v.join(" ")]));
+  assert.equal(dir["script-src"], "'self' https://accounts.google.com/gsi/ https://cdn.apple-cloudkit.com");
+  assert.equal(dir["style-src"], undefined, "app.js writes inline styles");
+  for (const h of ["https://www.googleapis.com", "https://oauth2.googleapis.com", "https://petitfrench-token-helper.token-helper.workers.dev", "https://api.apple-cloudkit.com"]) assert.ok(dir["connect-src"].includes(h), `connect-src misses ${h}`);
+  assert.ok(!/<script>[^<]/.test(html), "inline <script> in index.html");
+  assert.ok(!/ on[a-z]+="/.test(readFileSync(here("app.js"), "utf8")), "inline on…= handler in app.js");
+}
+console.log("ok — csp");
