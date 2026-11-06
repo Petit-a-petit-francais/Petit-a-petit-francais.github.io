@@ -58,16 +58,27 @@ This feature adds optional sign-in so that progress syncs through **the learner'
 - **The token helper:** one Cloudflare Worker on the free tier, in Parsa's Cloudflare account, in this repo under `token-helper/`. It holds the Google client secret as a Worker secret. It has exactly two endpoints:
   - `POST /exchange {code}` calls Google's token endpoint with `redirect_uri: "postmessage"` and returns `{access_token, expires_in, refresh_token}`.
   - `POST /refresh {refresh_token}` returns `{access_token, expires_in}`.
-  - **It stores nothing, logs nothing, and never sees progress data.** It never calls Drive.
+  - **It stores nothing, logs nothing, and never sees progress data.** It never calls Drive. "Logs nothing" means Workers observability and logs are turned off in `wrangler.toml`, and the code has no `console.log`.
+  - **Request forgery check:** following Google's popup code-flow guide, the site sends `X-Requested-With: XmlHttpRequest`, and the Worker rejects any request without it.
   - CORS allows only the site's origin, it accepts only those two requests, and it applies Cloudflare's basic rate limit.
   - About 30 lines. It isn't part of the static site, and it's deployed by hand with `wrangler`.
 - **Tokens in the browser:**
   - The **access token stays in memory only**.
-  - The **refresh token** is kept in `localStorage` (`cahier-fr-google`). It's limited to the app's own hidden Drive folder. That's an accepted risk: the site loads no third-party scripts for people who aren't signed in, and every displayed value goes through `esc`.
+  - The **refresh token** is kept in `localStorage` (`cahier-fr-google`). It's limited to the app's own hidden Drive folder. That's an accepted risk: the site loads no third-party scripts for people who aren't signed in, and every displayed value goes through `esc`. Google's comparison page says the code flow needs "secure storage" for refresh tokens, so add a **Content-Security-Policy `<meta>`** to `index.html`:
+    - `script-src` allows only `'self'`, `https://accounts.google.com/gsi/client` and `https://cdn.apple-cloudkit.com`.
+    - `connect-src` allows only `'self'`, the Google API, OAuth and CloudKit hosts, and the Worker.
+    - `frame-src` allows only `https://accounts.google.com` and the Apple sign-in host.
+    - Before adding it, test the policy so it doesn't break the existing inline handlers or styles. If the site has inline scripts, move them to files rather than allowing `'unsafe-inline'` for scripts.
   - Renew about 5 minutes before expiry, silently through the helper.
   - If the helper is unreachable, or Google rejects the refresh token (revoked, or unused for 6 months), show "Reconnect Google". Changes made meanwhile wait and push later.
-- **Sign out** of Google revokes the refresh token at `https://oauth2.googleapis.com/revoke`, straight from the browser, then deletes it locally.
-- **If Google returns no refresh token** (Google only gives one on first consent), request the code again with `prompt: "consent"`.
+- **Sign out** of Google on a device **only deletes that device's refresh token** and forgets the access token. It does **not** revoke anything. Google's docs say a revocation "removes all OAuth 2.0 scopes previously granted to a project, invalidating any issued access or refresh tokens for all clients", so revoking would sign out every device.
+- **"Disconnect Google on all devices"** is a separate action with its own warning. It revokes at `https://oauth2.googleapis.com/revoke`. Other devices then show "Reconnect Google".
+- **Refresh token per device:** each device gets its own. If the exchange returns no refresh token (consent was already given on another device), request the code once more with `prompt: "consent"`. That's one extra popup, the first time on each device only.
+  - Google allows 100 refresh tokens per account per client and invalidates the oldest beyond that. That's far more devices than a learner has.
+- **Verify in an early spike:**
+  - `redirect_uri: "postmessage"` for the popup code exchange is widely used but isn't stated in the GIS code-model guide.
+  - Whether a refresh token comes back on first consent with the GIS code client, which has no `access_type` option.
+  - Prove both with a test account before building the rest.
 - **Duplicate files:** Drive allows several files with the same name, so two devices syncing for the first time at once can each create `progress.json`. On every pull, list all files with that name, merge them all, keep the oldest one, and delete the extras after a successful write.
 - **Account label:** use Drive `about.get` (`user.emailAddress` / `displayName`) if the `drive.appdata` scope allows it. Otherwise label it just "Google Drive". Don't add scopes just for the label.
 
@@ -78,7 +89,8 @@ This feature adds optional sign-in so that progress syncs through **the learner'
 **Setup Parsa does once** (the builder writes a checklist in the README):
 - **Google Cloud:** an OAuth client of type Web, for origin `https://petit-a-petit-francais.github.io`, with consent screen and publishing.
   - Google's docs class `drive.appdata` as **non-sensitive**, so no demo video or security assessment is needed. Brand verification still applies.
-  - Developers report that Google won't verify a `github.io` address, because GitHub owns that domain. **Parsa's call: try github.io first.** Buy a custom domain (about $10–15 a year, pointed at GitHub Pages) only if Google rejects it.
+  - Developers report (forum posts, not a written Google rule) that Google won't verify a `github.io` address, because GitHub owns that domain. **Parsa's call: try github.io first.** Buy a custom domain (about $10–15 a year, pointed at GitHub Pages) only if Google rejects it.
+- **Publish the Google app to "In production" before inviting learners.** While it's in "Testing", Google expires refresh tokens after **7 days**, so everyone would see "Reconnect Google" weekly.
 - **Cloudflare:** a free account, deploy `token-helper/`, and set the client secret as a Worker secret.
 - CloudKit container, web API token with that allowed origin, and the `Progress` schema deployed to production.
 
