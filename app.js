@@ -676,7 +676,8 @@
       for (const box of scope ? el.querySelectorAll(scope) : [el]) {
         const walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
         for (let node; (node = walk.nextNode()) && marks.size < 1500; ) { // shortcut: caps ranges for one-letter queries on huge sheets
-          const hay = Core.stripAccents(node.data.toLowerCase()); // same length as node.data for French (NFC) text
+          const hay = Core.stripAccents(node.data.toLowerCase());
+          if (hay.length !== node.data.length) continue; // offsets only line up when normalising kept the length
           for (let i = hay.indexOf(q); i > -1; i = hay.indexOf(q, i + q.length)) {
             const r = new Range(); r.setStart(node, i); r.setEnd(node, i + q.length); marks.add(r);
           }
@@ -694,7 +695,7 @@
         if (!hit) continue;
         n++;
         if (r.group) counts.set(r.group, (counts.get(r.group) || 0) + 1);
-        if (q && marks) highlight(r.el, q);
+        if (q && marks && marks.size < 1500) highlight(r.el, q);
       }
       for (const g of groups) {
         const c = counts.get(g) || 0, count = g.querySelector(".count");
@@ -805,6 +806,7 @@
 
   function route() {
     session = null;
+    CSS.highlights?.delete("find");
     if (dialog.open) dialog.close();
     document.body.classList.remove("focus");
     if ("speechSynthesis" in window) speechSynthesis.cancel();
