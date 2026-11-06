@@ -65,7 +65,9 @@ This feature adds optional sign-in so that progress syncs through **the learner'
 - **Tokens in the browser:**
   - The **access token stays in memory only**.
   - The **refresh token** is kept in `localStorage` (`cahier-fr-google`). It's limited to the app's own hidden Drive folder. That's an accepted risk: the site loads no third-party scripts for people who aren't signed in, and every displayed value goes through `esc`. Google's comparison page says the code flow needs "secure storage" for refresh tokens, so add a **Content-Security-Policy `<meta>`** to `index.html`:
-    - `script-src` allows only `'self'`, `https://accounts.google.com/gsi/client` and `https://cdn.apple-cloudkit.com`.
+    - `script-src` allows only `'self'`, `https://accounts.google.com/gsi/` and `https://cdn.apple-cloudkit.com`. Move the inline service-worker registration script in `index.html` into a file.
+    - Leave out `style-src`, because `app.js` writes inline `style=""` attributes.
+    - The early spike records the exact Apple sign-in hosts needed for `frame-src` and `connect-src`.
     - `connect-src` allows only `'self'`, the Google API, OAuth and CloudKit hosts, and the Worker.
     - `frame-src` allows only `https://accounts.google.com` and the Apple sign-in host.
     - Before adding it, test the policy so it doesn't break the existing inline handlers or styles. If the site has inline scripts, move them to files rather than allowing `'unsafe-inline'` for scripts.
