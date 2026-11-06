@@ -654,7 +654,7 @@
     if (tab === "vocab") {
       body = THEMES.map((t) => {
         const words = DATA.vocab.filter((w) => w[2] === t);
-        return `<section class="card vocab-group sheet-section" data-group><h3>${esc(t)} <span class="tiny">· ${words.length}</span></h3><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item" data-text="${esc((fr + " " + en).toLowerCase())}">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></section>`;
+        return `<section class="card vocab-group sheet-section" data-group><h3>${esc(t)} <span class="tiny">· <span class="count" data-total="${words.length}">${words.length}</span></span></h3><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item" data-text="${esc((fr + " " + en).toLowerCase())}">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></section>`;
       }).join("");
     }
     main.innerHTML = `<div class="page">
@@ -665,12 +665,43 @@
       <p class="tiny" id="found" role="status"></p>
       ${body}</div>`;
     const find = document.getElementById("find");
+    // normalise once per tab, not on every keystroke
+    const rows = [...main.querySelectorAll("[data-text]")].map((el) => ({ el, text: Core.stripAccents(el.dataset.text), group: el.closest("[data-group]") }));
+    const groups = [...main.querySelectorAll("[data-group]")];
+    // where matched text gets highlighted: the word and meaning, the verb and meaning, or the whole rule
+    const scope = { vocab: ".fr, .en", verbs: "td:nth-child(-n+2)" }[tab];
+    const marks = window.Highlight && CSS.highlights ? new Highlight() : null;
+    if (marks) CSS.highlights.set("find", marks);
+    const highlight = (el, q) => {
+      for (const box of scope ? el.querySelectorAll(scope) : [el]) {
+        const walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+        for (let node; (node = walk.nextNode()) && marks.size < 1500; ) { // shortcut: caps ranges for one-letter queries on huge sheets
+          const hay = Core.stripAccents(node.data.toLowerCase());
+          if (hay.length !== node.data.length) continue; // offsets only line up when normalising kept the length
+          for (let i = hay.indexOf(q); i > -1; i = hay.indexOf(q, i + q.length)) {
+            const r = new Range(); r.setStart(node, i); r.setEnd(node, i + q.length); marks.add(r);
+          }
+        }
+      }
+    };
     find.oninput = () => {
-      const q = find.value.trim().toLowerCase();
-      const rows = main.querySelectorAll("[data-text]");
+      const q = Core.stripAccents(find.value.trim().toLowerCase());
+      const counts = new Map();
       let n = 0;
-      rows.forEach((r) => { const hit = !q || r.dataset.text.includes(q) || Core.stripAccents(r.dataset.text).includes(Core.stripAccents(q)); r.hidden = !hit; n += hit; });
-      main.querySelectorAll("[data-group]").forEach((g) => (g.hidden = !g.querySelector("[data-text]:not([hidden])")));
+      marks?.clear();
+      for (const r of rows) {
+        const hit = !q || r.text.includes(q);
+        if (r.el.hidden === hit) r.el.hidden = !hit; // touch the DOM only when visibility changes
+        if (!hit) continue;
+        n++;
+        if (r.group) counts.set(r.group, (counts.get(r.group) || 0) + 1);
+        if (q && marks && marks.size < 1500) highlight(r.el, q);
+      }
+      for (const g of groups) {
+        const c = counts.get(g) || 0, count = g.querySelector(".count");
+        g.hidden = !c;
+        if (count) count.textContent = q ? `${c} of ${count.dataset.total}` : count.dataset.total;
+      }
       document.getElementById("found").textContent = q ? `${n} match${n === 1 ? "" : "es"}` : "";
     };
     main.querySelectorAll("[data-jump]").forEach((b) => (b.onclick = () => document.getElementById(b.dataset.jump).scrollIntoView({ behavior: "smooth" })));
@@ -775,6 +806,7 @@
 
   function route() {
     session = null;
+    CSS.highlights?.delete("find");
     if (dialog.open) dialog.close();
     document.body.classList.remove("focus");
     if ("speechSynthesis" in window) speechSynthesis.cancel();
@@ -820,7 +852,7 @@
       default: return pageHome();
     }
   }
-  window.addEventListener("hashchange", () => document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(route).ready.catch(() => {}) : route());
+  window.addEventListener("hashchange", route);
   applyTheme();
   route();
   window.__cahier = { ITEMS, VERBS, LESSONS, state: () => S, session: () => session }; // handle for automated checks
