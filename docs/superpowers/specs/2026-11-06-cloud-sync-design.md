@@ -222,3 +222,14 @@ Also update "Last updated" and the "no accounts" line in the intro.
 - Debounce timing, retry/backoff, and status wording beyond the strings above.
 - Whether the CloudKit field is a string or an asset (state size decides).
 - Whether `about.get` returns an account label under `drive.appdata`.
+
+## Spike findings (2026-11-06)
+
+Tested with Parsa's real accounts: Google client `305235627631-…`, container `iCloud.com.parsakp.petitfrench` (Development), and a throwaway page at `https://petitfrench.parsakp.com`.
+
+- **Google `redirect_uri: "postmessage"`: works.** A code from `initCodeClient` (`ux_mode: "popup"`) exchanged at `https://oauth2.googleapis.com/token` returned tokens.
+- **Google refresh token: returned every time.** Three exchanges (first consent, a repeat sign-in with the same account, and `prompt: "consent"`) each returned a `refresh_token`. The access token lasts 3599 s.
+- **Apple persistence: works in Chrome and Safari.** With `persist: true` and a `localStorage` token store, both stay signed in after a reload. CloudKit JS reads the store from **`services.authTokenStore`** (checked in `cloudkit.js`), not from the top level of the config.
+- **Apple API token origins:** CloudKit rejected `http://localhost:8000`, and every other origin, even with "Any Domain" saved, for at least 10 minutes. The two `https` origins on the list worked. Local Apple testing therefore needs one of the listed `https` origins, not localhost.
+- **New containers take a while:** right after it was created, the container gave "Invalid container to get datastore" and every API token failed with `AUTHENTICATION_FAILED`. Both cleared after it had been set up for a while.
+- **Hosts the page loaded from:** `accounts.google.com`, `cdn.apple-cloudkit.com` and `api.apple-cloudkit.com`. Sign-in popups open in their own windows, so they don't need to be on the page's security rule. Drive calls (`www.googleapis.com`) and the token helper weren't part of this test, so Task 9 adds them.
