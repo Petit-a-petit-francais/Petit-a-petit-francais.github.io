@@ -518,3 +518,86 @@ console.log("ok — sync engine");
   assert.equal(store["cahier-fr-google"], undefined);
 }
 console.log("ok — google provider");
+
+// iCloud provider, against a fake CloudKit
+{
+  const recs = {}, assets = {}, store = {};
+  let tag = 1, failNext = null, signedIn = false, signOuts = 0;
+  const g = { console, setTimeout, Promise, Blob, TextEncoder, JSON,
+    localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = String(v)), removeItem: (k) => delete store[k] } };
+  g.window = g;
+  g.fetch = async (url) => { if (!assets[url]) throw new TypeError("Failed to fetch"); return { ok: true, status: 200, text: async () => assets[url] }; };
+  const out = (records, errors = []) => ({ records, errors, hasErrors: errors.length > 0 });
+  const trip = () => { const f = failNext; failNext = null; if (f) throw f; };
+  const copy = (r) => JSON.parse(JSON.stringify(r));
+  const db = {
+    async fetchRecords(names) { trip(); const ok = names.filter((n) => recs[n]); return out(ok.map((n) => copy(recs[n])), names.filter((n) => !recs[n]).map((n) => ({ ckErrorCode: "NOT_FOUND", recordName: n }))); },
+    async saveRecords([r]) {
+      trip();
+      const cur = recs[r.recordName];
+      if ((cur ? cur.recordChangeTag : undefined) !== r.recordChangeTag) return out([], [{ ckErrorCode: "CONFLICT", recordName: r.recordName }]);
+      const fields = { data: { value: r.fields.data.value } };
+      if (r.fields.blob && r.fields.blob.value) { const url = "https://cvws.test/" + tag; assets[url] = await r.fields.blob.value.text(); fields.blob = { value: { downloadURL: url } }; }
+      recs[r.recordName] = { recordName: r.recordName, recordType: r.recordType, recordChangeTag: "t" + tag++, fields };
+      return out([copy(recs[r.recordName])]);
+    },
+    async deleteRecords(names) { trip(); names.forEach((n) => delete recs[n]); return out([]); },
+  };
+  const container = { privateCloudDatabase: db, setUpAuth: async () => (signedIn ? { userRecordName: "_u" } : null), whenUserSignsIn: async () => ((signedIn = true), { userRecordName: "_u" }), signOut: () => signOuts++ };
+  g.CloudKit = { configure: (c) => (g.ckConfig = c), getDefaultContainer: () => container };
+  vm.createContext(g);
+  for (const f of ["sync-config.js", "sync-apple.js"]) if (existsSync(here(f))) vm.runInContext(readFileSync(here(f), "utf8"), g);
+  const SA = g.SyncApple;
+  assert.ok(SA, "SyncApple is not defined");
+  await SA.load();
+  const cfg = g.ckConfig, c0 = cfg.containers[0];
+  assert.equal(c0.containerIdentifier, "iCloud.com.parsakp.petitfrench");
+  assert.equal(c0.apiTokenAuth.persist, true);
+  assert.equal(c0.apiTokenAuth.signInButton.id, "apple-sign-in-button");
+  cfg.services.authTokenStore.putToken("iCloud.com.parsakp.petitfrench", "tok");
+  assert.equal(store["cahier-fr-ck"], "tok");
+  assert.equal(cfg.services.authTokenStore.getToken("iCloud.com.parsakp.petitfrench"), "tok");
+  assert.equal(await SA.restore(), null, "not signed in yet");
+  const p = await SA.signIn();
+  assert.equal(p.id, "apple");
+  assert.ok(await SA.restore(), "restores once signed in");
+  // pull / push with change tags
+  assert.equal((await p.pull()).copies.length, 0);
+  await p.push('{"a":1}', []);
+  let c = (await p.pull()).copies;
+  assert.equal(c.length, 1);
+  assert.equal(c[0].text, '{"a":1}');
+  await p.push('{"b":1}', [c[0].ref]);
+  assert.equal(recs["progress-prev"].fields.data.value, '{"a":1}');
+  assert.equal(recs.progress.fields.data.value, '{"b":1}');
+  const code = async (fn) => { try { await fn(); return "none"; } catch (e) { return e.code; } };
+  assert.equal(await code(() => p.push('{"c":1}', [c[0].ref])), "conflict", "stale change tag");
+  // Review Focus 5: large state goes into the asset
+  const big = '"' + "x".repeat(699999) + '"';
+  assert.equal(new TextEncoder().encode(big).length, 700001);
+  c = (await p.pull()).copies;
+  await p.push(big, [c[0].ref]);
+  assert.equal(recs.progress.fields.data.value, "");
+  assert.ok(recs.progress.fields.blob);
+  c = (await p.pull()).copies;
+  assert.equal(c[0].text, big);
+  await p.push('{"small":1}', [c[0].ref]);
+  assert.equal((await p.pull()).copies[0].text, '{"small":1}', "a later small save wins over the old asset");
+  assert.equal(recs["progress-prev"].fields.data.value, "", "the large backup is kept as an asset too");
+  // errors
+  failNext = { ckErrorCode: "AUTHENTICATION_REQUIRED" };
+  assert.equal(await code(() => p.pull()), "auth");
+  failNext = { ckErrorCode: "NETWORK_ERROR" };
+  assert.equal(await code(() => p.pull()), "offline");
+  failNext = new TypeError("Failed to fetch");
+  assert.equal(await code(() => p.pull()), "offline");
+  failNext = { ckErrorCode: "THROTTLED" };
+  assert.equal(await code(() => p.pull()), "offline");
+  // remove and sign out
+  await p.removeAll();
+  assert.equal(Object.keys(recs).length, 0);
+  await p.signOut();
+  assert.equal(store["cahier-fr-ck"], undefined);
+  assert.equal(signOuts, 1);
+}
+console.log("ok — apple provider");
