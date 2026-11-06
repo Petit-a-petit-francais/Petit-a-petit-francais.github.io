@@ -159,7 +159,7 @@
 
   // ---------- question cards ----------
   const label = (it) => (it.type === "conj" ? `${it.v.inf} · ${TENSES[it.tense]}` : it.type === "vocab" ? it.fr : Core.fillCloze(it.s));
-  const inputAttrs = `autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"`;
+  const inputAttrs = `lang="fr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"`;
 
   function makeCard(it) {
     if (it.type === "conj") {
@@ -170,7 +170,7 @@
       const subj = it.tense === "impe" ? `<span class="muted">(${["", "tu", "", "nous", "vous"][p]})</span> ` : esc(c.subject) + (c.subject.endsWith("'") ? "" : " ");
       return {
         label: "Conjugate the verb",
-        body: `<p class="q-prompt">${subj}<span class="blank"><input class="ans" data-i="0" ${inputAttrs} aria-label="Conjugated form" size="13"></span>${it.tense === "impe" ? " !" : ""}</p>
+        body: `<p class="q-prompt" lang="fr">${subj}<span class="blank"><input class="ans" data-i="0" ${inputAttrs} aria-label="Conjugated form" size="13"></span>${it.tense === "impe" ? " !" : ""}</p>
           <div class="q-meta"><span class="badge blue">${esc(it.v.inf)}</span><span class="badge">${esc(TENSES[it.tense])}</span><span class="badge">${esc(it.v.en)}</span></div>`,
         blanks: [c.answers],
         full: (b) => (it.tense === "impe" ? b[0] + " !" : (c.subject.endsWith("'") ? c.subject : c.subject + " ") + b[0]),
@@ -202,7 +202,7 @@
       label: it.q ? "Rewrite the sentence" : "Fill in the blank" + (blanks.length > 1 ? "s" : ""),
       body: it.q
         ? `<p class="q-prompt">${esc(it.q.replace(/^.*?:\s*/, ""))}</p><p class="q-sub">${esc(it.q.split(":")[0])}</p>${body}`
-        : `<p class="q-prompt">${body}</p><div class="reveal-en"><button type="button" class="reveal">Show English translation</button><span hidden class="muted">${esc(it.en)}</span></div>`,
+        : `<p class="q-prompt" lang="fr">${body}</p><div class="reveal-en"><button type="button" class="reveal">Show English translation</button><span hidden class="muted">${esc(it.en)}</span></div>`,
       blanks,
       full: (b) => { let k = 0; return parts.map((p) => (typeof p === "string" ? p : b[k++])).join(""); },
       en: it.en,
@@ -308,7 +308,7 @@
     bar.innerHTML = `<div class="bar-inner">
       <div class="verdict" role="status"><span class="badge-ico">${icon(score === 2 ? "check" : score === 1 ? "alert" : "x")}</span>
         <div><h2>${title}</h2>
-          <p class="answer">${score === 2 ? "" : "Answer: "}${esc(full)} ${sayBtn(full, "Listen", true)}</p>
+          <p class="answer">${score === 2 ? "" : "Answer: "}<span lang="fr">${esc(full)}</span> ${sayBtn(full, "Listen", true)}</p>
           ${yours}${notes.map((n) => `<p class="rule">${esc(n)}</p>`).join("")}
           ${card.en ? `<p class="en">${esc(card.en)}</p>` : ""}
           ${score < 2 && fiche && DATA.short[fiche.id] ? `<p class="rule">${icon("bulb")} ${esc(DATA.short[fiche.id])}</p>` : ""}
@@ -347,6 +347,8 @@
 
   function renderSummary() {
     const s = session;
+    // ask once the learner has real progress, so the browser won't evict localStorage
+    navigator.storage?.persisted?.().then((p) => p || navigator.storage.persist()).catch(() => {});
     const first = new Map();
     for (const r of s.results) if (!first.has(r.it.id)) first.set(r.it.id, r);
     const all = [...first.values()];
@@ -422,7 +424,7 @@
         bar.className = "bar slide-up " + ["bad", "almost", "ok"][g.score];
         bar.innerHTML = `<div class="bar-inner"><div class="verdict" role="status"><span class="badge-ico">${icon(g.score === 2 ? "check" : g.score === 1 ? "alert" : "x")}</span><div>
           <h2>${g.score === 2 ? "No mistakes!" : g.score === 1 ? "Almost, check the accents" : "A few mistakes"}</h2>
-          <p class="answer">${esc(d.text)} ${sayBtn(d.text, "Listen", true)}</p>
+          <p class="answer"><span lang="fr">${esc(d.text)}</span> ${sayBtn(d.text, "Listen", true)}</p>
           ${g.score < 2 && input.value.trim() ? `<p class="yours">You wrote: ${diffHtml(d.text, input.value)}</p>` : ""}<p class="en">${esc(d.en)}</p></div></div>
           <div class="bar-actions"><button class="btn primary lg" id="check" type="button">Continue <kbd>Enter</kbd></button></div></div>`;
         document.getElementById("check").onclick = verify;
@@ -454,14 +456,14 @@
         const spoken = (t === "impe" ? "" : p === 2 ? "il " : p === 5 ? "ils " : c.subject + (c.subject.endsWith("'") ? "" : " ")) + c.answers[0];
         return `<li><span><span class="p${shown.endsWith("'") ? " el" : ""}">${esc(shown)}</span>${esc(c.answers.slice(0, 2).join(" / "))}</span>${sayBtn(spoken)}</li>`;
       }).join("");
-      return `<div class="conj"><h3>${named ? `${esc(V.inf)} · ` : ""}${esc(TENSES[t])}</h3><ol>${rows}</ol></div>`;
+      return `<div class="conj"><h3>${named ? `${esc(V.inf)} · ` : ""}${esc(TENSES[t])}</h3><ol lang="fr">${rows}</ol></div>`;
     }).join("");
     return named ? cards : `<div class="conj-grid">${cards}</div>`;
   }
 
   function examples(l, n = 8) {
     const rows = DATA.cloze.filter((c) => (l.topics || []).includes(c[0])).slice(0, n);
-    return rows.map((c) => `<div class="example"><span class="say-pair">${sayBtn(plain(c[1]), "Listen", true)}</span><div><div class="fr">${fillHtml(c[1])}</div><div class="en">${esc(c[2])}</div></div></div>`).join("");
+    return rows.map((c) => `<div class="example"><span class="say-pair">${sayBtn(plain(c[1]), "Listen", true)}</span><div><div class="fr" lang="fr">${fillHtml(c[1])}</div><div class="en">${esc(c[2])}</div></div></div>`).join("");
   }
 
   function lessonBody(l, compact = false) {
@@ -471,7 +473,7 @@
     if (l.models) html += `<h3 style="margin:24px 0 12px">Model verbs</h3><div class="conj-grid">${l.models.map((m) => conjTable(VERBS.find((v) => v.inf === m), l.tenses, true)).join("")}</div>`;
     if (l.themes) {
       const words = DATA.vocab.filter((w) => l.themes.includes(w[2]));
-      html += `<div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item">${sayBtn(fr)}<span class="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div>`;
+      html += `<div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div>`;
     }
     if (l.topics) html += `<h3 style="margin:24px 0 8px">Examples</h3>${examples(l, compact ? 4 : 8)}`;
     return html;
@@ -576,7 +578,7 @@
     if (l.topics) html += stepH("See it in use") + `<div class="card">${examples(l, 10)}</div>`;
     if (l.themes) {
       const words = DATA.vocab.filter((w) => l.themes.includes(w[2]));
-      html += stepH("Study the words") + `<p class="muted small">Listen to each word and say it out loud. Nouns come with their article, so learn the gender at the same time.</p><div class="card"><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item">${sayBtn(fr)}<span class="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></div>`;
+      html += stepH("Study the words") + `<p class="muted small">Listen to each word and say it out loud. Nouns come with their article, so learn the gender at the same time.</p><div class="card"><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></div>`;
     }
     html += stepH("Check yourself") + `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
       <div><h3>Quick check · ${Math.min(10, items.length)} questions</h3><p class="tiny" style="margin:0">Cards you get wrong come back in your daily review until they stick.</p></div>
@@ -632,13 +634,13 @@
           const f = (t, p) => { const c = Core.conjugate(V, t, p, "m"); return (c.subject.endsWith("'") ? c.subject : c.subject + " ") + c.answers[0]; };
           const pres = V.impersonal ? esc(f("pres", 2)) : [0, 3, 5].map((p) => esc(f("pres", p))).join("<br>");
           const p0 = V.impersonal ? 2 : 0;
-          return `<tr data-text="${esc((V.inf + " " + V.en).toLowerCase())}"><td><button class="verb-btn" type="button" data-verb="${esc(V.inf)}">${esc(V.inf)}</button>${V.aux === "e" ? " *" : ""}</td><td class="muted">${esc(V.en)}</td><td>${pres}</td><td>${esc(f("pc", p0))}</td><td>${esc(f("imp", p0))}</td><td>${esc(f("fut", p0))}</td><td>${esc(f("cond", p0))}</td></tr>`;
+          return `<tr lang="fr" data-text="${esc((V.inf + " " + V.en).toLowerCase())}"><td><button class="verb-btn" type="button" data-verb="${esc(V.inf)}">${esc(V.inf)}</button>${V.aux === "e" ? " *" : ""}</td><td class="muted" lang="en">${esc(V.en)}</td><td>${pres}</td><td>${esc(f("pc", p0))}</td><td>${esc(f("imp", p0))}</td><td>${esc(f("fut", p0))}</td><td>${esc(f("cond", p0))}</td></tr>`;
         }).join("")}</tbody></table></div>`;
     }
     if (tab === "vocab") {
       body = THEMES.map((t) => {
         const words = DATA.vocab.filter((w) => w[2] === t);
-        return `<section class="card vocab-group sheet-section" data-group><h3>${esc(t)} <span class="tiny">· ${words.length}</span></h3><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item" data-text="${esc((fr + " " + en).toLowerCase())}">${sayBtn(fr)}<span class="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></section>`;
+        return `<section class="card vocab-group sheet-section" data-group><h3>${esc(t)} <span class="tiny">· ${words.length}</span></h3><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item" data-text="${esc((fr + " " + en).toLowerCase())}">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></section>`;
       }).join("");
     }
     main.innerHTML = `<div class="page">
@@ -736,6 +738,8 @@
   function applyTheme() {
     if (S.settings.theme === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.dataset.theme = S.settings.theme;
+    const bar = { light: "#f5f5f7", dark: "#000000" };
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = bar[S.settings.theme] || bar[m.media.includes("dark") ? "dark" : "light"]; });
   }
 
   // ---------- navigation ----------
@@ -802,7 +806,7 @@
       default: return pageHome();
     }
   }
-  window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", () => document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(route) : route());
   applyTheme();
   route();
   window.__cahier = { ITEMS, VERBS, LESSONS, state: () => S, session: () => session }; // handle for automated checks
