@@ -94,16 +94,16 @@
   if ("speechSynthesis" in window) {
     loadVoices();
     // Android Chrome reports voices late: refill the Settings list the first time they arrive
-    speechSynthesis.onvoiceschanged = () => { const had = voices.length; loadVoices(); if (!had && voices.length && location.hash.startsWith("#/settings")) pageSettings(); };
+    speechSynthesis.onvoiceschanged = () => { const had = voices.length; loadVoices(); if (!had && voices.length && location.hash.startsWith("#/settings") && (document.activeElement === main || !main.contains(document.activeElement))) pageSettings(); };
   }
   // where to get better French voices, for the visitor's own system (Android's UA also says Linux, so it goes first)
-  const OS = ((ua) => /Android/i.test(ua) ? "android" : /CrOS/.test(ua) ? "chromeos" : /Win/.test(ua) ? "windows" : /iPhone|iPad|iPod/.test(ua) ? "ios" : /Mac/.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "")(navigator.userAgent);
+  const OS = ((ua) => /Android/i.test(ua) ? "android" : /CrOS/.test(ua) ? "chromeos" : /Win/.test(ua) ? "windows" : /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1) ? "ios" : /Mac/.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "")(navigator.userAgent);
   const VOICE_HELP = {
-    windows: "On Windows, Microsoft Edge has the most natural voices (Denise for France; Sylvie or Antoine for Québec). For other browsers, add voices in Settings › Time & language › Speech › Add voices › French (France) and French (Canada).",
-    android: "On Android, install French voices in Settings › System › Languages › Text-to-speech output › Speech Services by Google › Install voice data › French (France and Canada). Menu names vary by phone maker.",
-    linux: "On Linux, Chrome and Edge include online French voices. Firefox uses your system speech engine: install speech-dispatcher with a French voice (espeak-ng, or a better-sounding engine such as RHVoice or Piper), then restart the browser.",
+    windows: "On Windows, Microsoft Edge has the most natural voices (Denise for France; Sylvie or Antoine for Québec). For other browsers, add voices in Settings › Time & language › Speech › Manage voices › Add voices › French (France) and French (Canada).",
+    android: "On Android, install French voices in Settings › System › Languages (or Languages & input) › Text-to-speech output › Speech Services by Google › Install voice data › French (France and Canada). Menu names vary by phone maker.",
+    linux: "On Linux, Chrome includes online Google French voices. Firefox uses your system speech engine: install speech-dispatcher with a French voice (espeak-ng, or a better-sounding engine such as RHVoice or Piper), then restart the browser.",
     chromeos: "On a Chromebook, add Google French voices in Settings › Accessibility › Text-to-Speech › Text-to-Speech engine settings.",
-    mac: "On a Mac, download better voices: System Settings › Accessibility › Spoken Content › System voice › Manage Voices › French, and pick ones marked Premium or Enhanced (e.g. Thomas for France, Amélie or Nicolas for Canada). Microsoft Edge also has natural online voices.",
+    mac: "On a Mac, download better voices: System Settings (System Preferences on older macOS) › Accessibility › Spoken Content › System voice › Manage Voices › French, and pick ones marked Premium or Enhanced (e.g. Thomas for France, Amélie or Nicolas for Canada). Microsoft Edge also has natural online voices.",
     ios: "On iPhone or iPad, download better voices in Settings › Accessibility › Spoken Content › Voices › French, and pick ones marked Premium or Enhanced.",
   };
   const voicesFor = (acc) => voices.filter((v) => vLang(v) === ACCENTS[acc].lang.toLowerCase());
