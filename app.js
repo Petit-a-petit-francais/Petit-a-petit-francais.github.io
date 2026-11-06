@@ -71,7 +71,7 @@
     S = Core.merge(S, clean(o));
     S.log = Core.sumLogs(S.logs);
   });
-  Object.assign(App, { getState: () => S, replaceState });
+  Object.assign(App, { getState: () => S, replaceState, clean, empty: (epoch) => Core.emptyState(DEFAULTS, epoch) });
   window.App = App;
 
   const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

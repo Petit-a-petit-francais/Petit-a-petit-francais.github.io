@@ -245,3 +245,161 @@ console.log("ok — progress validation");
   assert.equal(Core.hash(""), "811c9dc5");
 }
 console.log("ok — merge");
+
+// sync engine, against fake clouds
+if (existsSync(here("sync.js"))) vm.runInContext(readFileSync(here("sync.js"), "utf8"), ctx);
+{
+  const { Sync } = ctx;
+  assert.ok(Sync, "Sync is not defined");
+  const D = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: ["pres", "pc"], theme: "auto" };
+  const clean = (x) => Core.cleanState(x, D, ["pres", "pc", "fut"]);
+  const st = (o = {}) => clean({ v: 2, ...o });
+  const sv = (x) => JSON.parse(JSON.stringify(Core.syncView(x)));
+  const day = "2026-11-01";
+  const cloud = (...states) => ({ copies: states.map((s, i) => ({ text: typeof s === "string" ? s : JSON.stringify(Core.syncView(s)), ref: i })), next: 9, backup: null });
+  const fake = (id, c) => {
+    const p = { id, label: id, calls: [], pushes: 0, failPush: null,
+      async pull() { p.calls.push("pull"); return { copies: c.copies.map((x) => ({ ...x })) }; },
+      async push(text, refs) { p.calls.push("push"); if (p.failPush) { const e = p.failPush; p.failPush = null; throw e; } p.pushes++; c.backup = c.copies[0]?.text ?? null; c.copies = [{ text, ref: c.next++ }]; },
+      async removeAll() { p.calls.push("removeAll"); c.copies = []; c.backup = null; },
+      async signOut() { p.calls.push("signOut"); } };
+    return p;
+  };
+  const fakeApp = (state) => { const a = { state, backup: null, failSave: false, onSaved: null, DEVICE: "devaaaaa",
+    getState: () => a.state, replaceState(n) { a.backup = a.state; a.state = n; return !a.failSave; }, clean, empty: (ep) => Core.emptyState(D, ep) }; return a; };
+  const mem = () => { let v = null; return { get: () => v, set: (x) => (v = x) }; };
+  const engine = (app, answer = null) => {
+    const e = { asks: [], status: {} };
+    e.sync = Sync.create({ app, core: Core, ask: async (kind) => (e.asks.push(kind), answer), onStatus: (id, s) => (e.status[id] = s), store: mem() });
+    return e;
+  };
+  const cloudState = (c) => clean(JSON.parse(c.copies[0].text));
+
+  // two devices, two clouds, offline edits on both
+  {
+    const g = cloud(), a = cloud();
+    const A = fakeApp(st({ srs: { x: { m: 10, n: 1 } }, logs: { devaaaaa: { [day]: { n: 2 } } } }));
+    const B = fakeApp(st({ srs: { y: { m: 11, n: 1 } }, logs: { devbbbbb: { [day]: { n: 3 } } } }));
+    const eA = engine(A), eB = engine(B);
+    await eA.sync.link(fake("google", g)); await eA.sync.link(fake("apple", a));
+    await eB.sync.link(fake("google", g)); await eB.sync.link(fake("apple", a));
+    for (let i = 0; i < 2; i++) { await eA.sync.run(); await eB.sync.run(); }
+    assert.deepEqual(sv(A.state), sv(B.state));
+    assert.deepEqual(sv(cloudState(g)), sv(A.state));
+    assert.deepEqual(sv(cloudState(a)), sv(A.state));
+    assert.ok(A.state.srs.x && A.state.srs.y);
+    assert.equal(Core.sumLogs(A.state.logs)[day].n, 5);
+    assert.equal(eA.status.google, "synced");
+  }
+  // duplicate Drive files collapse into one merged copy
+  {
+    const g = cloud(st({ srs: { p: { m: 1 } } }), st({ srs: { q: { m: 1 } } }));
+    const A = fakeApp(st()), e = engine(A);
+    await e.sync.link(fake("google", g));
+    assert.equal(g.copies.length, 1);
+    assert.ok(cloudState(g).srs.p && cloudState(g).srs.q);
+  }
+  // unreadable and too-new copies are left alone; the other cloud still syncs
+  {
+    const g = cloud("{bad"), a = cloud(), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A);
+    const pg = fake("google", g);
+    await e.sync.link(pg); await e.sync.link(fake("apple", a));
+    assert.equal(e.status.google, "unreadable");
+    assert.equal(pg.pushes, 0);
+    assert.equal(g.copies[0].text, "{bad");
+    assert.ok(cloudState(a).srs.x);
+    const n = cloud(JSON.stringify({ v: 3, srs: { z: { m: 1 } } })), pn = fake("google", n), e2 = engine(fakeApp(st({ srs: { x: { m: 1 } } })));
+    await e2.sync.link(pn);
+    assert.equal(e2.status.google, "reload");
+    assert.equal(pn.pushes, 0);
+  }
+  // erase everywhere, then a device on the old epoch
+  const epochCase = async (answer) => {
+    const g = cloud(), A = fakeApp(st({ srs: { x: { m: 1 } } })), B = fakeApp(st({ srs: { y: { m: 2 } } }));
+    const eA = engine(A), eB = engine(B, answer);
+    await eA.sync.link(fake("google", g)); await eB.sync.link(fake("google", g)); await eA.sync.run();
+    const old = B.state;
+    await eA.sync.eraseEverywhere();
+    assert.ok(Core.isEmpty(A.state) && A.state.epoch.t > 0);
+    const before = g.copies[0].text;
+    await eB.sync.run();
+    assert.deepEqual(eB.asks, ["epoch"]);
+    return { g, A, B, eA, eB, old, before };
+  };
+  {
+    const { g, B, eB, old, before } = await epochCase(null);
+    assert.equal(g.copies[0].text, before, "nothing pushed while unanswered");
+    assert.equal(B.state, old, "device unchanged while unanswered");
+    assert.equal(eB.status.google, "attention");
+  }
+  {
+    const { B, old } = await epochCase("erase");
+    assert.ok(Core.isEmpty(B.state));
+    assert.equal(B.backup, old);
+  }
+  {
+    const { A, B, eA, old } = await epochCase("upload");
+    assert.ok(B.backup === old && B.state.srs.x && B.state.srs.y);
+    await eA.sync.run();
+    assert.ok(A.state.srs.x && A.state.srs.y, "uploaded cards reach the erasing device");
+    assert.deepEqual(A.state.epoch, B.state.epoch);
+  }
+  // an empty device on an old epoch adopts the cloud without asking
+  {
+    const g = cloud(st({ epoch: { id: "x", t: 5 }, srs: { z: { m: 9 } } })), C = fakeApp(st()), e = engine(C, "upload");
+    await e.sync.link(fake("google", g));
+    assert.deepEqual(e.asks, []);
+    assert.ok(C.state.srs.z);
+  }
+  // first sign-in with progress on both sides asks once
+  for (const answer of ["cloud", "add", null]) {
+    const g = cloud(st({ srs: { z: { m: 9 } } })), a = cloud(), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A, answer);
+    const old = A.state;
+    const linked = await e.sync.link(fake("google", g), { fresh: true });
+    assert.deepEqual(e.asks, ["account"]);
+    if (answer === "cloud") assert.ok(A.state.srs.z && !A.state.srs.x && A.backup === old);
+    if (answer === "add") assert.ok(A.state.srs.z && A.state.srs.x);
+    if (answer === null) { assert.equal(linked, false); assert.equal(A.state, old); assert.equal(e.status.google, "attention"); assert.deepEqual([...e.sync.linked()], []); continue; }
+    await e.sync.link(fake("apple", a), { fresh: true });
+    assert.deepEqual(e.asks, ["account"], "a second provider never asks");
+  }
+  // a push conflict re-pulls and retries
+  {
+    const g = cloud(st({ srs: { z: { m: 9 } } })), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A), p = fake("google", g);
+    p.failPush = Object.assign(new Error("changed"), { code: "conflict" });
+    await e.sync.link(p);
+    assert.equal(p.pushes, 1);
+    assert.ok(cloudState(g).srs.x && cloudState(g).srs.z);
+    assert.equal(p.calls.filter((c) => c === "pull").length, 2);
+    assert.equal(e.status.google, "synced");
+  }
+  // deleting a cloud copy removes everything there, then signs out
+  {
+    const g = cloud(), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A), p = fake("google", g);
+    await e.sync.link(p);
+    await e.sync.deleteCloud("google");
+    assert.deepEqual(p.calls.slice(-2), ["removeAll", "signOut"]);
+    assert.equal(g.copies.length, 0);
+    assert.deepEqual([...e.sync.linked()], []);
+  }
+  // Review Focus 3: never push a state this device couldn't save
+  {
+    const g = cloud(st({ srs: { z: { m: 9 } } })), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A), p = fake("google", g);
+    A.failSave = true;
+    await e.sync.link(p);
+    assert.equal(e.status.google, "localfail");
+    assert.equal(p.pushes, 0);
+  }
+  // a failing cloud reports its status without stopping the other
+  {
+    const g = cloud(), a = cloud(), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A), p = fake("google", g);
+    p.pull = async () => { throw Object.assign(new Error("net"), { code: "offline" }); };
+    await e.sync.link(p); await e.sync.link(fake("apple", a));
+    assert.equal(e.status.google, "offline");
+    assert.equal(e.status.apple, "synced");
+    p.pull = async () => { throw Object.assign(new Error("expired"), { code: "auth" }); };
+    await e.sync.run();
+    assert.equal(e.status.google, "reconnect");
+  }
+}
+console.log("ok — sync engine");
