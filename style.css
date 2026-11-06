@@ -55,7 +55,8 @@
 a, button, input, select, label, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 h1, h2, h3 { text-wrap: balance; }
 p, li, .lead { text-wrap: pretty; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 68px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 68px; scrollbar-gutter: stable; }
+.tabs, .heat, .table-wrap, .toc { scrollbar-width: thin; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.47 var(--font); letter-spacing: -0.022em; -webkit-font-smoothing: antialiased; }
 a { color: var(--primary); }
 button, input, select { font: inherit; color: inherit; }
