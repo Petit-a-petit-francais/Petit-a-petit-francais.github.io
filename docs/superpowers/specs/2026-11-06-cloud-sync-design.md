@@ -110,7 +110,7 @@ The device ID is random and kept in its own local key (`cahier-fr-device`), whic
 - **v1 → v2:** on load, if `cahier-fr-v1` exists, clean it and convert it. Its whole `log` goes into the **`"legacy"`** slot. Cards get `m` from `last`, and settings get `setAt = 0`. Then merge it into v2.
   - The v1 key stays, so an old tab still open somewhere that keeps saving to v1 loses nothing. It's merged in again **only when its content has changed** since the last merge (store a hash of it in `cahier-fr-v1-merged`).
   - Converted v1 data always gets epoch `{ id: "", t: 0 }`, so it loses to any erase.
-  - **Every erase** (this device, everywhere, or while signed out) deletes `cahier-fr-v1` after the backup is saved, so erased progress can't come back from it.
+  - **Every erase** (this device, everywhere, or while signed out) deletes `cahier-fr-v1` after the backup is saved, and sets a local flag `cahier-fr-v1-retired`. From then on v1 is ignored, even if an old tab writes it again, so erased progress can't come back from it.
 - **The trade-off of the legacy slot:** on a day *before sync existed* when two devices both practiced, the stats show the larger device's count, not the sum. Undercounting a few old days is accepted, because double counting would be worse. *My call:* reviews and schedules are not affected, only the daily totals.
 - **Old exports** (no `v`) import into the `"legacy"` slot the same way. Importing the same file twice, or several old exports, never double-counts.
 - **v2 exports** have no `log` field, only `logs`. Today's app rejects an import with no `log` ("That file isn't a progress export…"), so already-released versions can't import v2 files and mangle them.
@@ -138,7 +138,7 @@ Deleting needs care, because every other device and the other cloud still hold f
   - **Everywhere.** It starts a new epoch with empty progress and pushes it to **every linked cloud**. *My call.*
 - **A device whose epoch is older than the cloud's:**
   - Sync checks epochs **before** calling `Core.merge`, because merge would silently drop the older side.
-  - If this device has no progress (a brand-new device, or one just erased), it adopts the cloud copy with no prompt.
+  - If this device has no progress (no cards, no finished lessons, and every log count zero: a brand-new device, or one just erased), it adopts the cloud copy with no prompt.
   - Otherwise sync **pauses for this device**, writing nothing anywhere, and the status shows "Needs attention" until the learner answers. Before discarding anything, it saves its state to the backup.
   - It asks: "Your progress was erased from another device. Erase it here too, or keep this device's progress and upload it again?"
   - "Upload again" re-stamps this device's data into the new epoch.
