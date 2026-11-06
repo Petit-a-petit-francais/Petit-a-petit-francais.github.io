@@ -815,3 +815,34 @@ DATA.verbs.push(
   ["agrandir", "to enlarge, to extend", "agrandis agrandis agrandit agrandissons agrandissez agrandissent", "agrandi", "a"],
   ["suggérer", "to suggest", "suggère suggères suggère suggérons suggérez suggèrent", "suggéré", "a"],
 );
+
+// Wishes with the conditionnel ("Dix choses que j'aimerais faire dans ma vie").
+DATA.verbs.push(
+  ["suffire", "to be enough", "suffis suffis suffit suffisons suffisez suffisent", "suffi", "a"],
+);
+DATA.cloze.push(
+  ["conditionnel", "J'[aimerais](aimer) obtenir la citoyenneté canadienne.", "I'd like to get Canadian citizenship."],
+  ["conditionnel", "Je [voudrais](vouloir) habiter à New York un jour.", "I'd like to live in New York one day."],
+  ["conditionnel", "Elle [souhaiterait](souhaiter) avoir sa propre maison à Vancouver.", "She would like to have her own house in Vancouver."],
+  ["conditionnel", "J'[adorerais](adorer) faire une croisière pour mes trente ans.", "I'd love to go on a cruise for my thirtieth birthday."],
+  ["conditionnel", "Je [préférerais](préférer) habiter à Istanbul plutôt qu'au Canada.", "I'd rather live in Istanbul than in Canada."],
+  ["conditionnel", "Nous [ferions](faire) plus de sport et nous [irions](aller) plus souvent à la salle de sport.", "We'd do more sport and go to the gym more often."],
+  ["conditionnel", "Il [soutiendrait](soutenir) sa thèse de doctorat dans deux ans.", "He would defend his PhD thesis in two years."],
+  ["conditionnel", "Vous [rendriez](rendre) visite à votre famille plus souvent ?", "Would you visit your family more often?"],
+  ["conditionnel", "Ils [assisteraient](assister) à plus de concerts de rock.", "They would go to more rock concerts."],
+  ["conditionnel", "Tu [pourrais](pouvoir) arrêter le temps quand tu es heureux ?", "Could you stop time when you're happy?"],
+  ["hypothèse (si)", "Si j'[avais](avoir) assez d'argent un jour, j'[achèterais](acheter) une maison.", "If I had enough money one day, I'd buy a house."],
+  ["subjonctif", "J'aimerais que ma chaîne YouTube [devienne](devenir) très populaire.", "I'd like my YouTube channel to become very popular."],
+  ["subjonctif", "Je souhaiterais que tout le monde [puisse](pouvoir) réaliser ses rêves.", "I wish everyone could make their dreams come true."],
+  ["infinitif", "J'aimerais apprendre [à](préposition) jouer de la guitare électrique.", "I'd like to learn to play the electric guitar."],
+  ["constructions utiles", "J'aimerais rendre visite [à](préposition) ma famille en Iran.", "I'd like to visit my family in Iran."],
+  ["constructions utiles", "Je voudrais [visiter](visit a place) Londres et Berlin.", "I'd like to visit London and Berlin."],
+  ["adjectifs", "J'aimerais parler [plusieurs](plusieurs, + langues f pl) langues.", "I'd like to speak several languages."],
+  ["genre et nombre", "J'aimerais remonter le temps, quand j'étais [étudiante](étudiant, f).", "I'd like to go back in time, to when I was a student."],
+  ["articles", "Je voudrais aussi voir [les](article) États-Unis.", "I'd also like to see the United States."],
+  ["présent", "24 heures ne [suffisent](suffire) pas pour moi !", "24 hours aren't enough for me!"],
+  ["présent", "Ma mère me [manque](manquer) et je voudrais la voir.", "I miss my mother and I'd like to see her."],
+  ["adverbes", "Je n'ai pas [suffisamment](suffisant → adverbe) de temps.", "I don't have enough time."],
+);
+DATA.fiches.find((f) => f.id === "fut").html += `<p><b>Talking about wishes:</b> <i>j'aimerais, je voudrais, je souhaiterais, j'adorerais, je préférerais</i> + infinitive: <i>J'aimerais voyager partout dans le monde.</i> With a different subject, use <b>que + subjonctif</b>: <i>J'aimerais que ma chaîne <b>devienne</b> populaire. Je souhaiterais que tout le monde <b>puisse</b> réaliser ses rêves.</i></p>
+<p>Watch the verb's preposition: <i>rendre visite <b>à</b> quelqu'un</i> (a person) but <i>visiter</i> + place; <i>apprendre <b>à</b> danser</i>; <i>plusieurs</i> never takes an -e.</p>`;
