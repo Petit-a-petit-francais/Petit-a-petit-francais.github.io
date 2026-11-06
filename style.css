@@ -91,7 +91,6 @@ main { min-width: 0; padding: 56px clamp(16px, 4vw, 48px) 96px; outline: none; }
 @media (max-width: 860px) {
   .nav { display: none; }
   .sidebar-foot { margin-left: auto; }
-  .streak-mini .today { display: none; }
   main { padding: 28px 16px calc(88px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; inset: auto 0 0 0; z-index: 20;
@@ -100,10 +99,11 @@ main { min-width: 0; padding: 56px clamp(16px, 4vw, 48px) 96px; outline: none; }
   }
   .tabbar a {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px;
-    font-size: 10px; letter-spacing: 0; color: var(--text-3); text-decoration: none;
+    font-size: 11px; letter-spacing: 0; color: var(--text-3); text-decoration: none;
   }
   .tabbar a[aria-current="page"] { color: var(--primary); }
 }
+@media (max-width: 1000px) { .streak-mini .today { display: none; } }
 @media (max-width: 359px) { .logo span { display: none; } }
 body.focus .sidebar, body.focus .tabbar { display: none; }
 body.focus main { padding: 0; }
@@ -253,7 +253,7 @@ input[type="search"] { width: 100%; max-width: 420px; border-radius: 999px; padd
 /* ---------- cheatsheets ---------- */
 /* segmented control */
 .tabs { display: flex; width: fit-content; max-width: 100%; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-2); margin-bottom: 28px; overflow-x: auto; }
-.tabs a { padding: 0 18px; min-height: 38px; display: flex; align-items: center; gap: 8px; border-radius: 999px; text-decoration: none; color: var(--text-2); font-size: 15px; white-space: nowrap; }
+.tabs a { padding: 0 18px; min-height: 44px; display: flex; align-items: center; gap: 8px; border-radius: 999px; text-decoration: none; color: var(--text-2); font-size: 15px; white-space: nowrap; }
 .tabs a:hover { color: var(--text); }
 .tabs a[aria-current="page"] { background: var(--seg, var(--surface)); color: var(--text); font-weight: 600; }
 .sheet-layout { display: grid; grid-template-columns: 220px 1fr; gap: 32px; align-items: start; }
