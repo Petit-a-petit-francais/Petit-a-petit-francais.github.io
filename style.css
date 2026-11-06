@@ -386,9 +386,14 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(
 /* WCAG 2.4.11: keep focused controls clear of the fixed bars */
 @media (max-width: 860px) { html { scroll-padding-bottom: 80px; } }
 html:has(body.focus) { scroll-padding-top: 16px; scroll-padding-bottom: 180px; }
+@media (max-width: 640px) { html:has(body.focus) { scroll-padding-bottom: 50vh; } }
 
-/* page cross-fade (View Transitions); the top bar stays put */
-.sidebar { view-transition-name: topbar; }
+/* press feedback for touch, where hover styles don't apply */
+.row-link:active, .tile:active { background: var(--bg); }
+.tabbar a:active, .nav a:active, .tabs a:active, .toc button:active, .verb-btn:active, .reveal-en button:active { opacity: .6; }
+.accents button:active { border-color: var(--primary); color: var(--primary); }
+
+/* page cross-fade (View Transitions) */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
 
 /* users who ask for more contrast */
@@ -404,5 +409,5 @@ html:has(body.focus) { scroll-padding-top: 16px; scroll-padding-bottom: 180px; }
 @media (forced-colors: active) {
   .track i, .goal i, .meter i, .heat i, .status-dot, .step .n { forced-color-adjust: none; }
   .tabs a[aria-current="page"], .nav a[aria-current="page"], .tabbar a[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; }
-  .card, .list, .hero, .callout, .bar { border: 1px solid CanvasText; }
+  .card, .list, .hero, .callout, .bar, .track, .goal, .meter { border: 1px solid CanvasText; }
 }

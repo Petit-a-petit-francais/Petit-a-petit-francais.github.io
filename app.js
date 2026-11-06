@@ -159,7 +159,7 @@
 
   // ---------- question cards ----------
   const label = (it) => (it.type === "conj" ? `${it.v.inf} · ${TENSES[it.tense]}` : it.type === "vocab" ? it.fr : Core.fillCloze(it.s));
-  const inputAttrs = `lang="fr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"`;
+  const inputAttrs = `autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"`;
 
   function makeCard(it) {
     if (it.type === "conj") {
@@ -302,13 +302,13 @@
     const title = score === 2 ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : score === 1 ? "Almost, check the accents" : giveUp ? "Here's the answer" : "Not quite";
     const notes = res.map((r) => r.note).filter(Boolean);
     const typedWrong = res.filter((r) => r.score < 2 && r.typed.trim());
-    const yours = score < 2 && typedWrong.length ? `<p class="yours">You wrote: ${typedWrong.map((r) => diffHtml(r.best, r.typed)).join(" · ")}</p>` : "";
+    const yours = score < 2 && typedWrong.length ? `<p class="yours">You wrote: <span lang="fr">${typedWrong.map((r) => diffHtml(r.best, r.typed)).join(" · ")}</span></p>` : "";
     const bar = document.getElementById("bar");
     bar.className = "bar slide-up " + ["bad", "almost", "ok"][score];
     bar.innerHTML = `<div class="bar-inner">
       <div class="verdict" role="status"><span class="badge-ico">${icon(score === 2 ? "check" : score === 1 ? "alert" : "x")}</span>
         <div><h2>${title}</h2>
-          <p class="answer">${score === 2 ? "" : "Answer: "}<span lang="fr">${esc(full)}</span> ${sayBtn(full, "Listen", true)}</p>
+          <p class="answer"><span>${score === 2 ? "" : "Answer: "}<span lang="fr">${esc(full)}</span></span> ${sayBtn(full, "Listen", true)}</p>
           ${yours}${notes.map((n) => `<p class="rule">${esc(n)}</p>`).join("")}
           ${card.en ? `<p class="en">${esc(card.en)}</p>` : ""}
           ${score < 2 && fiche && DATA.short[fiche.id] ? `<p class="rule">${icon("bulb")} ${esc(DATA.short[fiche.id])}</p>` : ""}
@@ -348,7 +348,7 @@
   function renderSummary() {
     const s = session;
     // ask once the learner has real progress, so the browser won't evict localStorage
-    navigator.storage?.persisted?.().then((p) => p || navigator.storage.persist()).catch(() => {});
+    if (!renderSummary.asked) { renderSummary.asked = true; navigator.storage?.persisted?.().then((p) => p || navigator.storage.persist()).catch(() => {}); }
     const first = new Map();
     for (const r of s.results) if (!first.has(r.it.id)) first.set(r.it.id, r);
     const all = [...first.values()];
@@ -361,7 +361,7 @@
       <h1>${s.lesson ? "Lesson complete" : "Session complete"}</h1>
       <p class="score">${pct}%</p>
       <p class="lead" style="margin:0 auto">${ok} of ${all.length} right on the first try.${s.lesson ? " The new cards from this lesson are now in your daily review." : ""}</p>
-      ${missed.length ? `<ul aria-label="To review">${missed.map((r) => `<li>${sayBtn(r.full)}<span>${esc(r.full)}</span><span class="tiny">${esc(r.it.type === "conj" ? label(r.it) : r.it.group)}</span></li>`).join("")}</ul><p class="tiny">These come back first in your next review.</p>` : `<p style="margin-top:16px">No mistakes. Excellent.</p>`}
+      ${missed.length ? `<ul aria-label="To review">${missed.map((r) => `<li>${sayBtn(r.full)}<span lang="fr">${esc(r.full)}</span><span class="tiny">${esc(r.it.type === "conj" ? label(r.it) : r.it.group)}</span></li>`).join("")}</ul><p class="tiny">These come back first in your next review.</p>` : `<p style="margin-top:16px">No mistakes. Excellent.</p>`}
       <p style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px">
         <a class="btn primary lg" href="${s.back}" id="done">${s.back === "#/" ? "Back to home" : "Done"}</a>
         <button class="btn lg" type="button" id="again">Practise again</button></p></div>`;
@@ -425,7 +425,7 @@
         bar.innerHTML = `<div class="bar-inner"><div class="verdict" role="status"><span class="badge-ico">${icon(g.score === 2 ? "check" : g.score === 1 ? "alert" : "x")}</span><div>
           <h2>${g.score === 2 ? "No mistakes!" : g.score === 1 ? "Almost, check the accents" : "A few mistakes"}</h2>
           <p class="answer"><span lang="fr">${esc(d.text)}</span> ${sayBtn(d.text, "Listen", true)}</p>
-          ${g.score < 2 && input.value.trim() ? `<p class="yours">You wrote: ${diffHtml(d.text, input.value)}</p>` : ""}<p class="en">${esc(d.en)}</p></div></div>
+          ${g.score < 2 && input.value.trim() ? `<p class="yours">You wrote: <span lang="fr">${diffHtml(d.text, input.value)}</span></p>` : ""}<p class="en">${esc(d.en)}</p></div></div>
           <div class="bar-actions"><button class="btn primary lg" id="check" type="button">Continue <kbd>Enter</kbd></button></div></div>`;
         document.getElementById("check").onclick = verify;
         document.getElementById("check").focus();
@@ -806,7 +806,7 @@
       default: return pageHome();
     }
   }
-  window.addEventListener("hashchange", () => document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(route) : route());
+  window.addEventListener("hashchange", () => document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(route).ready.catch(() => {}) : route());
   applyTheme();
   route();
   window.__cahier = { ITEMS, VERBS, LESSONS, state: () => S, session: () => session }; // handle for automated checks
