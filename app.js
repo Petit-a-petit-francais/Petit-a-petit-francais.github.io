@@ -746,7 +746,7 @@
     const link = (k, h, t, ic, short) => `<a href="${h}" ${k === cur ? 'aria-current="page"' : ""}>${icon(ic)}<span>${short ? t.replace("Cheatsheets", "Sheets") : t}</span>${!short && k === "practice" && due ? `<span class="badge blue">${due}</span>` : ""}</a>`;
     document.getElementById("nav").innerHTML = NAV.map((n) => link(...n)).join("");
     document.getElementById("tabbar").innerHTML = NAV.map((n) => link(...n, true)).join("");
-    document.getElementById("sidebar-foot").innerHTML = `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b> day streak<br>${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
+    document.getElementById("sidebar-foot").innerHTML = `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b> day streak</span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-say]");
