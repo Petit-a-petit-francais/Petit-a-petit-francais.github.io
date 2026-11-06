@@ -14,9 +14,9 @@
   });
 
   function create({ app, core, ask, onStatus = () => {}, now = Date.now, store = localStore() }) {
-    const providers = new Map();
+    const providers = new Map(), held = new Set(); // held: remembered, but couldn't be loaded yet
     let busy = null, again = false, timer = null, selfSave = false;
-    const remember = () => store.set({ ...(store.get() || {}), linked: [...providers.keys()] });
+    const remember = () => store.set({ ...(store.get() || {}), linked: [...new Set([...providers.keys(), ...held])] });
     const each = (status) => { for (const id of providers.keys()) onStatus(id, status); };
     const fail = (id, e) => onStatus(id, STATUS[e && e.code] || "offline", e && e.message);
     const replace = (next, why) => { selfSave = true; try { return app.replaceState(next, why); } finally { selfSave = false; } };
@@ -103,6 +103,7 @@
           } else if (answer !== "add") { onStatus(p.id, "attention"); return false; }
         }
       }
+      held.delete(p.id);
       providers.set(p.id, p);
       remember();
       await run();
@@ -111,6 +112,7 @@
     async function unlink(id) {
       const p = providers.get(id);
       providers.delete(id);
+      held.delete(id);
       remember();
       if (p) await p.signOut();
     }
@@ -132,7 +134,8 @@
       if (typeof addEventListener === "function") addEventListener("online", () => run().catch(() => {}));
       return run();
     }
-    return { link, unlink, run, schedule, eraseEverywhere, deleteCloud, start, linked: () => providers.keys() };
+    const hold = (id) => { held.add(id); remember(); };
+    return { link, unlink, hold, run, schedule, eraseEverywhere, deleteCloud, start, linked: () => providers.keys() };
   }
 
   root.Sync = { create, remembered: () => (localStore().get() || {}).linked || [] };

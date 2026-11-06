@@ -97,6 +97,7 @@
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>',
     print: '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
+    cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>',
     refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
   };
   const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
@@ -437,6 +438,8 @@
     const ok = all.filter((r) => r.score > 0).length;
     const missed = all.filter((r) => r.score === 0);
     if (s.lesson) { S.lessons[s.lesson] = Core.stamp(S); save(); }
+    const nd = syncPrefs().nudge || {};
+    syncPrefsSet({ nudge: { ...nd, sessions: (nd.sessions || 0) + 1 } });
     session = null;
     const pct = Math.round((ok / all.length) * 100);
     main.innerHTML = `<div class="done">
@@ -595,6 +598,7 @@
     }
     main.innerHTML = `<div class="page">
       <div class="page-head"><div><h1>${hello} !</h1><p class="lead" style="margin:0">${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }))}</p></div></div>
+      ${nudgeHtml()}
       <div class="home-top">
         <section class="card pad-lg hero" aria-labelledby="today-h">
           <span class="label" id="today-h">Today's review</span>
@@ -801,9 +805,9 @@
       </div>
       <h2>Appearance</h2>
       <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
-      <h2>Your data</h2>
-      <div class="card"><p class="muted small">Progress is saved in this browser only. Export a backup now and then so clearing browser data doesn't erase it. <a href="privacy.html">Privacy policy</a></p>
-        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:0"><button class="btn" type="button" id="export">Export progress</button>
+      <h2 id="sync">Sync across devices</h2>
+      <div class="card"><div id="sync-card"></div>
+        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0"><button class="btn" type="button" id="export">Export progress</button>
         <label class="btn" for="import">Import progress</label><input type="file" id="import" accept="application/json" hidden>
         <button class="btn ghost" type="button" id="reset" style="color:var(--danger)">Erase all progress</button></p>
         <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div></div>`;
@@ -827,6 +831,7 @@
     document.getElementById("autoplay").onchange = (e) => set("autoplay", e.target.checked);
     document.getElementById("theme").onchange = (e) => { set("theme", e.target.value); applyTheme(); };
     const msg = (t) => (document.getElementById("msg").textContent = t);
+    renderSyncCard();
     document.getElementById("export").onclick = () => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob([JSON.stringify({ ...S, log: undefined }, null, 1)], { type: "application/json" }));
@@ -846,14 +851,250 @@
         msg("That file isn't a progress export from this site. Nothing was changed.");
       }
     };
-    document.getElementById("reset").onclick = () => {
-      if (!confirm("Erase all progress, lessons and statistics? Export a backup first if you want to keep them.")) return;
+    const eraseHere = () => {
       replaceState(Core.emptyState(DEFAULTS, S.epoch), "erase"); // backs up first
-      ls.del(V1);
-      ls.set(V1_RETIRED, "1");
+      retireV1();
       msg("All progress erased.");
     };
+    document.getElementById("reset").onclick = () => {
+      if (!syncLinked().length) {
+        if (confirm("Erase all progress, lessons and statistics on this device? Export a backup first if you want to keep them. If you've synced before, signing in again brings your cloud copy back.")) eraseHere();
+        return;
+      }
+      openDialog("Erase all progress?", `<p>Export a backup first if you want to keep it.</p>
+        <p class="stack-btns"><button class="btn" type="button" data-erase="here">This device only</button><span class="tiny">Your progress comes back from the cloud on the next sync.</span></p>
+        <p class="stack-btns"><button class="btn" type="button" data-erase="all" style="color:var(--danger)">Everywhere</button><span class="tiny">Erases it on this device, in every cloud you're signed in to, and on your other devices when they next sync.</span></p>`);
+      document.querySelectorAll("[data-erase]").forEach((b) => (b.onclick = async () => {
+        dialog.close();
+        if (b.dataset.erase === "here") return eraseHere();
+        retireV1();
+        await syncEngine().eraseEverywhere();
+        msg("All progress erased everywhere.");
+      }));
+    };
   }
+
+  const retireV1 = () => { ls.del(V1); ls.set(V1_RETIRED, "1"); };
+
+  // ---------- cloud sync (optional sign-in; nothing loads from Google or Apple until someone uses it) ----------
+  const SYNC_KEY = "cahier-fr-sync";
+  const PROVIDERS = { google: { name: "Google", cloud: "Google Drive", mod: "SyncGoogle" }, apple: { name: "Apple", cloud: "iCloud", mod: "SyncApple" } };
+  const syncPrefs = () => parse(ls.get(SYNC_KEY)) || {};
+  const syncPrefsSet = (patch) => ls.set(SYNC_KEY, JSON.stringify({ ...syncPrefs(), ...patch }));
+  const accts = {}; // id -> { p, status, detail, at }
+  const ready = {}; // provider SDK loaded, so the next tap can open the popup straight away
+  const dismissed = {}; // the epoch question, closed unanswered, isn't asked again until the learner taps "Decide"
+  let engine = null;
+  const syncLinked = () => Object.keys(accts);
+  const appleFirst = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(Object.assign(new Error("offline"), { code: "offline" }));
+    document.head.append(s);
+  });
+  async function providerModule(id) {
+    const name = PROVIDERS[id].mod;
+    if (!window[name]) await loadScript(`sync-${id}.js`);
+    return window[name];
+  }
+  function syncEngine() {
+    if (!engine) {
+      engine = Sync.create({ app: App, core: Core, ask: askSync, onStatus: setSyncStatus });
+      engine.start().catch(() => {}); // save, back online and tab-visible triggers
+    }
+    return engine;
+  }
+  const announce = (t) => { const el = document.getElementById("sync-live"); if (el) el.textContent = t; };
+  const STATUS_TEXT = {
+    syncing: () => "Syncing…",
+    synced: (a) => (Date.now() - a.at < 60e3 ? "Synced just now" : `Synced at ${new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`),
+    offline: () => "Offline, will sync later",
+    reconnect: (a, id) => `Signed out of ${PROVIDERS[id].cloud}. Reconnect to keep syncing.`,
+    unreadable: () => "The cloud copy can't be read, so it was left alone.",
+    reload: () => "A newer version of the site saved your progress. Reload to update.",
+    localfail: () => "Couldn't save on this device",
+    attention: () => "Needs attention",
+    other: (a) => `Couldn't sync${a.detail ? `: ${a.detail}` : ""}`,
+  };
+  const statusText = (id) => { const a = accts[id]; return (STATUS_TEXT[a.status] || STATUS_TEXT.other)(a, id); };
+  // one word for the top bar
+  function overall() {
+    const st = syncLinked().map((id) => accts[id].status);
+    if (st.some((x) => !["synced", "syncing", "offline"].includes(x))) return "Needs attention";
+    if (st.includes("offline")) return "Offline";
+    if (st.includes("syncing")) return "Syncing…";
+    return "Synced";
+  }
+  function setSyncStatus(id, status, detail) {
+    const a = (accts[id] ||= {});
+    const changed = a.status !== status;
+    Object.assign(a, { status, detail: detail || "" }, status === "synced" ? { at: Date.now() } : {});
+    if (changed && status !== "syncing") announce(`${PROVIDERS[id].cloud}: ${statusText(id)}`);
+    renderNav();
+    renderSyncCard();
+  }
+  // the engine's questions, as dialogs; closing one unanswered leaves sync paused ("Needs attention")
+  const QUESTIONS = {
+    epoch: { title: "Progress erased elsewhere", text: "Your progress was erased from another device. Erase it here too, or keep this device's progress and upload it again?", answers: [["erase", "Erase it here too"], ["upload", "Keep and upload again"]] },
+    account: { title: "Add this device's progress?", text: "Add this device's progress to this account, or start from this account's cloud progress only?", answers: [["add", "Add this device's progress"], ["cloud", "Use the cloud progress only"]] },
+  };
+  function askSync(kind) {
+    if (dismissed[kind]) return Promise.resolve(null); // only the background (epoch) question stays quiet once closed
+    const q = QUESTIONS[kind];
+    return new Promise((resolve) => {
+      let answer = null;
+      openDialog(q.title, `<p>${q.text}</p><p class="tiny">Either way, a backup of this device's progress is kept.</p>
+        <p style="display:flex;gap:8px;flex-wrap:wrap">${q.answers.map(([v, l], i) => `<button class="btn${i ? "" : " primary"}" type="button" data-answer="${v}">${l}</button>`).join("")}</p>`);
+      document.querySelectorAll("[data-answer]").forEach((b) => (b.onclick = () => { answer = b.dataset.answer; dialog.close(); }));
+      dialog.addEventListener("close", () => { if (!answer && kind === "epoch") dismissed.epoch = true; resolve(answer); }, { once: true });
+    });
+  }
+  function confirmDialog(title, text, action, label, danger) {
+    openDialog(title, `<p>${text}</p><p style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="confirm-yes"${danger ? ' style="background:var(--danger);border-color:var(--danger)"' : ""}>${label}</button><button class="btn" type="button" id="confirm-no">Cancel</button></p>`);
+    document.getElementById("confirm-no").onclick = () => dialog.close();
+    document.getElementById("confirm-yes").onclick = async () => {
+      dialog.close();
+      try { await action(); } catch (e) { announce(`That didn't work: ${e.message || "network error"}. Try again later.`); renderSyncCard(); }
+    };
+  }
+  async function linkAccount(p, fresh) {
+    accts[p.id] = { ...accts[p.id], p, status: "syncing" };
+    const ok = await syncEngine().link(p, { fresh });
+    if (!ok) { if (!fresh) return; delete accts[p.id]; renderNav(); renderSyncCard(); return; }
+    syncPrefsSet({ nudge: { ...syncPrefs().nudge, off: true } }); // signed in: no more reminders
+    p.loadLabel?.().then(() => renderSyncCard());
+    renderSyncCard();
+  }
+  function signInFailed(id, e) {
+    const c = e && e.code;
+    announce(c === "popup" ? "Your browser blocked the sign-in window. Tap the button again."
+      : c === "cancelled" ? "Sign-in cancelled."
+      : c === "offline" ? "You're offline. Try again when you're connected."
+      : id === "apple" ? "Apple sign-in didn't work in this browser. Try Google instead."
+      : `Sign-in didn't work${e && e.message ? `: ${e.message}` : ""}.`);
+    renderSyncCard();
+  }
+  // Google: the first tap loads Google's script; the popup must open straight from a tap, so the second tap signs in.
+  function signInGoogle(btn) {
+    const G = window.SyncGoogle;
+    if (!ready.google || !G) {
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+      providerModule("google").then((M) => M.load()).then(() => { ready.google = true; renderSyncCard(); document.querySelector('[data-signin="google"]')?.focus(); })
+        .catch((e) => signInFailed("google", e));
+      return;
+    }
+    G.signIn().then((p) => linkAccount(p, !accts.google)).catch((e) => signInFailed("google", e)); // no await before signIn()
+  }
+  // Apple: CloudKit draws Apple's own button into #apple-sign-in-button; signIn() resolves once the learner uses it.
+  function signInApple(btn) {
+    btn.disabled = true;
+    btn.textContent = "Loading…";
+    ready.apple = "waiting";
+    providerModule("apple").then((M) => {
+      const done = M.signIn();
+      btn.hidden = true;
+      document.getElementById("apple-help").hidden = false;
+      return done;
+    }).then((p) => { ready.apple = false; return linkAccount(p, !accts.apple); })
+      .catch((e) => { ready.apple = false; signInFailed("apple", e); });
+  }
+  async function replaceCloud(id) {
+    const p = accts[id].p;
+    const { copies } = await p.pull();
+    await p.push(JSON.stringify(Core.syncView(S)), copies.map((c) => c.ref));
+    await syncEngine().run();
+  }
+  async function signOutOf(id) {
+    await syncEngine().unlink(id);
+    delete accts[id];
+    renderNav();
+    renderSyncCard();
+  }
+  function renderSyncCard() {
+    const el = document.getElementById("sync-card");
+    if (!el) return;
+    const linked = syncLinked();
+    const order = appleFirst ? ["apple", "google"] : ["google", "apple"];
+    const acct = (id) => {
+      const a = accts[id], P = PROVIDERS[id], st = a.status;
+      const fix = st === "reconnect" ? `<button class="btn primary" type="button" data-signin="${id}">${id === "google" && !ready.google ? "Reconnect Google" : id === "google" ? "Continue with Google" : "Reconnect iCloud"}</button>`
+        : st === "unreadable" ? `<button class="btn" type="button" data-act="replace" data-id="${id}">Replace cloud copy with this device's progress</button>`
+        : st === "reload" ? `<button class="btn primary" type="button" data-act="reload">Reload</button>`
+        : st === "attention" ? `<button class="btn primary" type="button" data-act="decide">Decide</button>` : "";
+      return `<div class="sync-acct">
+        <div class="grow"><b>${P.cloud}</b>${a.p && a.p.label && a.p.label !== P.cloud ? ` <span class="muted">· ${esc(a.p.label)}</span>` : ""}
+          <span class="tiny sync-status" data-state="${esc(st || "")}">${esc(statusText(id))}</span></div>
+        <div class="sync-btns">${fix}
+          <button class="btn" type="button" data-act="signout" data-id="${id}">Sign out</button>
+          <button class="btn ghost" type="button" data-act="delete" data-id="${id}" style="color:var(--danger)">Delete cloud copy</button>
+          ${id === "google" ? `<button class="btn ghost" type="button" data-act="disconnect">Disconnect Google on all devices</button>` : ""}</div></div>`;
+    };
+    const signIn = (id) => id === "google"
+      ? `<button class="btn" type="button" data-signin="google">${ready.google ? "Continue with Google" : "Sign in with Google"}</button>`
+      : `<button class="btn" type="button" data-signin="apple"${ready.apple === "waiting" ? " hidden" : ""}>Sign in with Apple</button>`;
+    const free = order.filter((id) => !linked.includes(id));
+    el.innerHTML = `<p class="muted small" style="margin-top:0">${linked.length
+      ? "Your progress is kept in your own cloud and merged with your other signed-in devices."
+      : "Progress is saved in this browser only. Sign in to keep it on all your devices, stored in your own Google Drive or iCloud. Or export a backup now and then."} <a href="privacy.html">Privacy policy</a></p>
+      ${linked.map(acct).join("")}
+      ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
+      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in.</p>`;
+    if (ready.apple === "waiting") document.getElementById("apple-help").hidden = false;
+    el.querySelectorAll("[data-signin]").forEach((b) => (b.onclick = () => (b.dataset.signin === "google" ? signInGoogle(b) : signInApple(b))));
+    el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => {
+      const id = b.dataset.id, cloud = id && PROVIDERS[id].cloud;
+      if (b.dataset.act === "reload") return location.reload();
+      if (b.dataset.act === "decide") { delete dismissed.epoch; return syncEngine().run(); }
+      if (b.dataset.act === "replace") return confirmDialog("Replace the cloud copy?", `The copy in your ${cloud} will be replaced with this device's progress. Its current content is kept as a backup there.`, () => replaceCloud(id), "Replace");
+      if (b.dataset.act === "signout") return confirmDialog(`Sign out of ${cloud}?`, `This device stops syncing with this ${cloud} account. Nothing is deleted: your progress stays here and in the cloud.`, () => signOutOf(id), "Sign out");
+      if (b.dataset.act === "delete") return confirmDialog(`Delete the ${cloud} copy?`, `This deletes everything this site stored in your ${cloud} and signs you out here. Other devices still signed in to this account will upload their copy again. To erase everywhere, use Erase all progress, then Everywhere.`, async () => { await syncEngine().deleteCloud(id); delete accts[id]; renderNav(); renderSyncCard(); }, "Delete", true);
+      if (b.dataset.act === "disconnect") return confirmDialog("Disconnect Google on all devices?", "This signs out Google on every device, and they'll show Reconnect Google. Your progress stays on each device and in Drive.", async () => { await window.SyncGoogle.disconnectAll(); await signOutOf("google"); }, "Disconnect", true);
+    }));
+  }
+  // linked devices: restore each remembered account, then keep syncing
+  async function syncBoot() {
+    if (!window.Sync) return;
+    const ids = Sync.remembered().filter((id) => PROVIDERS[id]);
+    if (!ids.length) return;
+    const e = syncEngine();
+    for (const id of ids) {
+      e.hold(id);
+      accts[id] = { status: "syncing" };
+      try {
+        const p = await (await providerModule(id)).restore();
+        if (p) await linkAccount(p, false);
+        else setSyncStatus(id, "reconnect");
+      } catch (err) { setSyncStatus(id, err && err.code === "auth" ? "reconnect" : "offline", err && err.message); }
+    }
+  }
+  document.addEventListener("DOMContentLoaded", syncBoot);
+
+  // reminders to sign in: after the 1st finished session, 7 and 30 practice days; per device
+  function nudgeLevel() {
+    const n = syncPrefs().nudge || {};
+    if (n.off || syncLinked().length || (syncPrefs().linked || []).length) return 0;
+    const days = Object.values(S.log).filter((d) => d.n > 0).length;
+    const level = days >= 30 ? 3 : days >= 7 ? 2 : (n.sessions || 0) >= 1 ? 1 : 0;
+    return level > (n.seen || 0) ? level : 0;
+  }
+  function nudgeHtml() {
+    const level = nudgeLevel();
+    if (!level) return "";
+    return `<section class="card nudge" aria-label="Sync your progress">${icon("cloud")}
+      <p class="grow">Keep your progress on all your devices: sign in with Google or Apple.</p>
+      <span class="nudge-btns"><a class="btn primary" href="#/settings#sync">Sign in</a><button class="btn" type="button" data-nudge="later" data-level="${level}">Later</button>${level === 3 ? `<button class="btn ghost" type="button" data-nudge="off">Don't ask again</button>` : ""}</span></section>`;
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-nudge]");
+    if (!b) return;
+    const n = syncPrefs().nudge || {};
+    syncPrefsSet({ nudge: b.dataset.nudge === "off" ? { ...n, off: true } : { ...n, seen: +b.dataset.level } });
+    b.closest(".nudge").remove();
+    main.focus();
+  });
 
   function applyTheme() {
     if (S.settings.theme === "auto") document.documentElement.removeAttribute("data-theme");
@@ -870,7 +1111,8 @@
     const link = (k, h, t, ic, short) => `<a href="${h}" ${k === cur ? 'aria-current="page"' : ""}>${icon(ic)}<span>${short ? t.replace("Cheatsheets", "Sheets") : t}</span>${!short && k === "practice" && due ? `<span class="badge blue">${due}</span>` : ""}</a>`;
     document.getElementById("nav").innerHTML = NAV.map((n) => link(...n)).join("");
     document.getElementById("tabbar").innerHTML = NAV.map((n) => link(...n, true)).join("");
-    document.getElementById("sidebar-foot").innerHTML = `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b> day streak</span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
+    const sync = syncLinked().length ? overall() : "";
+    document.getElementById("sidebar-foot").innerHTML = (sync ? `<a class="sync-ind" href="#/settings#sync" data-state="${{ Synced: "ok", "Syncing…": "busy", Offline: "off" }[sync] || "warn"}" aria-label="${sync}" title="${sync}">${icon("cloud")}</a>` : "") + `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b><span class="streak-word"> day streak</span></span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-say]");
@@ -909,7 +1151,7 @@
       case "review": return startSession(dailyQueue(params.has("more")), { back: "#/" });
       case "dictation": return startDictation();
       case "cheatsheets": return pageSheets(parts[1]);
-      case "settings": return pageSettings();
+      case "settings": { pageSettings(); const a = location.hash.split("#")[2]; if (a) document.getElementById(a)?.scrollIntoView(); return; }
       case "drill": {
         const k = params.get("k"), g = params.get("g");
         const pools = {

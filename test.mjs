@@ -382,6 +382,16 @@ if (existsSync(here("sync.js"))) vm.runInContext(readFileSync(here("sync.js"), "
     assert.equal(g.copies.length, 0);
     assert.deepEqual([...e.sync.linked()], []);
   }
+  // an account that couldn't load (offline at start) stays remembered until linked or signed out
+  {
+    const g = cloud(), A = fakeApp(st()), m = mem(), e = Sync.create({ app: A, core: Core, ask: async () => null, store: m });
+    e.hold("apple");
+    await e.link(fake("google", g));
+    assert.deepEqual([...m.get().linked].sort(), ["apple", "google"]);
+    assert.deepEqual([...e.linked()], ["google"]);
+    await e.unlink("apple");
+    assert.deepEqual([...m.get().linked], ["google"]);
+  }
   // Review Focus 3: never push a state this device couldn't save
   {
     const g = cloud(st({ srs: { z: { m: 9 } } })), A = fakeApp(st({ srs: { x: { m: 1 } } })), e = engine(A), p = fake("google", g);
