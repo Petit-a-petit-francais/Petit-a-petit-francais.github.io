@@ -2491,3 +2491,15 @@ DATA.vocab.push(
   ["le scientifique", "scientist", "Les métiers"], ["laïque", "secular", "Les mots utiles"],
   ["chez soi", "at home, at one's place", "Logement et ville"], ["le voisinage", "neighbourhood, vicinity", "Logement et ville"],
 );
+
+// Wishes and life plans.
+DATA.vocab.push(
+  ["suffire", "to be enough", "Verbes utiles"], ["suffisamment", "sufficiently, enough", "Les mots utiles"], ["rendre visite à", "to visit (a person)", "Verbes utiles"],
+  ["la citoyenneté", "citizenship", "Pays et nationalités"], ["la résidence permanente", "permanent residence", "Pays et nationalités"], ["la croisière", "cruise", "Le tourisme"],
+  ["le sans-abri", "homeless person (pl: les sans-abri)", "Les mots utiles"], ["la personne âgée", "elderly person", "Famille et état civil"], ["la pensée", "thought", "Les mots utiles"],
+  ["lire dans les pensées", "to read minds", "Expressions"], ["remonter le temps", "to go back in time", "Expressions"], ["voyager dans le temps", "to travel in time", "Expressions"],
+  ["le dressing", "walk-in closet", "Logement et ville"], ["immortel", "immortal (f: immortelle)", "Les adjectifs"], ["le perfectionnisme", "perfectionism", "Les émotions"],
+  ["stressant", "stressful", "Les adjectifs"], ["tropical", "tropical (m pl: tropicaux)", "La nature"], ["consécutif", "consecutive (f: consécutive)", "Les adjectifs"],
+  ["à l'ancienne", "old-style, vintage", "Expressions"], ["à la place", "instead", "Les mots utiles"], ["particulièrement", "particularly", "Les mots utiles"],
+  ["streamer", "to stream (online)", "Les arts et les médias"],
+);
