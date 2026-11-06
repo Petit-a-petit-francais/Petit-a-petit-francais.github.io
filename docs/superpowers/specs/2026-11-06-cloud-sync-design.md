@@ -159,7 +159,7 @@ All of it uses the existing visual language of [style.css](../../../style.css).
   - Each linked account shows its label (escaped with `esc`), a status line ("Synced just now" / "Offline, will sync later" / "Reconnect Google" / "Reload to update" / error), and **Sign out** and **Delete cloud copy** buttons with their warnings.
   - Export, Import and Erase stay in this card.
 - **Top bar sync indicator:** only for signed-in learners. A small icon with a tooltip and accessible name ("Synced", "Syncing…", "Offline", "Needs attention"). Tapping it opens the Settings card. People should see sync state where they study, without opening Settings.
-- **Home nudge:** after the first finished session, a dismissible card reads "Keep your progress on all your devices: sign in with Google or Apple." It has a "Later" button. Dismissing it, or signing in, hides it on that device.
+- **Home nudge:** after the first finished session, a dismissible card reads "Keep your progress on all your devices: sign in with Google or Apple." It has a "Later" button. Parsa chose to show **more than one reminder**. *My call on timing:* it shows after the 1st finished session, again after 7 days of practice, and again after 30 days of practice, then never again. Signing in hides it for good, and so does "Don't ask again", which appears on the last reminder. Reminders are counted per device.
 - **Accessibility:** every new control meets the site's WCAG 2.2 bar (keyboard, visible focus, real buttons). Status changes are announced through an `aria-live` region (reuse `#msg`). Apple's rendered button is checked for this, and wrapped or labelled if needed.
 
 ### Privacy page
