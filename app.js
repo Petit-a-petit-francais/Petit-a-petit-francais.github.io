@@ -53,24 +53,41 @@
     return ok;
   };
   // Replace the whole state (sync, import, erase): back up the old one first. False if it couldn't be saved.
+  const REPLACED = "cahier-fr-replaced"; // changes on every whole-state replace, so other tabs adopt it instead of merging
+  let seenReplace = ls.get(REPLACED);
   function replaceState(next, why) {
+    const prev = S;
     ls.set(BACKUP, stored(S));
+    ls.set(REPLACED, (seenReplace = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`));
     S = next;
     S.log = Core.sumLogs(S.logs);
     const ok = save();
+    if (!ok) { S = prev; return false; } // never keep (or later push) a state this device couldn't save
     applyTheme();
     if (!session) route(); // never yank the learner out of a running session
     else renderNav();
     return ok;
   }
-  // another tab of this site saved: take its progress in (it already saved, so don't save again)
-  window.addEventListener("storage", (e) => {
-    if (e.key !== KEY) return;
-    const o = parse(e.newValue);
+  // another tab of this site saved: take its progress in (it already saved, so don't save again).
+  // After an erase or other whole-state replace there, adopt its state: merging would bring the erased progress back.
+  function takeStored(str) {
+    const o = parse(str);
     if (!o || Core.tooNew(o)) return;
+    const r = ls.get(REPLACED);
+    if (r !== seenReplace) {
+      seenReplace = r;
+      S = clean(o);
+      S.log = Core.sumLogs(S.logs);
+      applyTheme();
+      if (!session) route(); else renderNav();
+      return;
+    }
     S = Core.merge(S, clean(o));
     S.log = Core.sumLogs(S.logs);
-  });
+  }
+  window.addEventListener("storage", (e) => { if (e.key === KEY) takeStored(e.newValue); });
+  // back from the back/forward cache: this page missed the other tabs' storage events
+  window.addEventListener("pageshow", (e) => { if (e.persisted) takeStored(ls.get(KEY)); });
   Object.assign(App, { getState: () => S, replaceState, clean, empty: (epoch) => Core.emptyState(DEFAULTS, epoch) });
   window.App = App;
 
@@ -868,8 +885,7 @@
         dialog.close();
         if (b.dataset.erase === "here") return eraseHere();
         retireV1();
-        await syncEngine().eraseEverywhere();
-        msg("All progress erased everywhere.");
+        msg(await syncEngine().eraseEverywhere() ? "All progress erased everywhere." : "Couldn't save on this device, so nothing was erased.");
       }));
     };
   }
@@ -885,6 +901,7 @@
   const ready = {}; // provider SDK loaded, so the next tap can open the popup straight away
   const dismissed = {}; // the epoch question, closed unanswered, isn't asked again until the learner taps "Decide"
   let engine = null;
+  let appleBox = null; // CloudKit draws Apple's button into this node once; it's moved back in on every redraw
   const syncLinked = () => Object.keys(accts);
   const appleFirst = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
   const loadScript = (src) => new Promise((resolve, reject) => {
@@ -998,8 +1015,8 @@
       btn.hidden = true;
       document.getElementById("apple-help").hidden = false;
       return done;
-    }).then((p) => { ready.apple = false; return linkAccount(p, !accts.apple); })
-      .catch((e) => { ready.apple = false; signInFailed("apple", e); });
+    }).then((p) => { ready.apple = false; appleBox.replaceChildren(); return linkAccount(p, !accts.apple); })
+      .catch((e) => { ready.apple = false; appleBox?.replaceChildren(); signInFailed("apple", e); });
   }
   async function replaceCloud(id) {
     const p = accts[id].p;
@@ -1042,6 +1059,8 @@
       ${linked.map(acct).join("")}
       ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
       <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in.</p>`;
+    if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
+    else appleBox = document.getElementById("apple-sign-in-button");
     if (ready.apple === "waiting") document.getElementById("apple-help").hidden = false;
     el.querySelectorAll("[data-signin]").forEach((b) => (b.onclick = () => (b.dataset.signin === "google" ? signInGoogle(b) : signInApple(b))));
     el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => {
