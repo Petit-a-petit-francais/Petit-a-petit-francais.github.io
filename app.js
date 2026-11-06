@@ -91,7 +91,21 @@
   let voices = [];
   const vLang = (v) => v.lang.replace("_", "-").toLowerCase();
   const loadVoices = () => (voices = speechSynthesis.getVoices().filter((v) => vLang(v).startsWith("fr")).sort((a, b) => voiceRank(b) - voiceRank(a)));
-  if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+  if ("speechSynthesis" in window) {
+    loadVoices();
+    // Android Chrome reports voices late: refill the Settings list the first time they arrive
+    speechSynthesis.onvoiceschanged = () => { const had = voices.length; loadVoices(); if (!had && voices.length && location.hash.startsWith("#/settings") && (document.activeElement === main || !main.contains(document.activeElement))) pageSettings(); };
+  }
+  // where to get better French voices, for the visitor's own system (Android's UA also says Linux, so it goes first)
+  const OS = ((ua) => /Android/i.test(ua) ? "android" : /CrOS/.test(ua) ? "chromeos" : /Win/.test(ua) ? "windows" : /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1) ? "ios" : /Mac/.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "")(navigator.userAgent);
+  const VOICE_HELP = {
+    windows: "On Windows, Microsoft Edge has the most natural voices (Denise for France; Sylvie or Antoine for Québec). For other browsers, add voices in Settings › Time & language › Speech › Manage voices › Add voices › French (France) and French (Canada).",
+    android: "On Android, install French voices in Settings › System › Languages (or Languages & input) › Text-to-speech output › Speech Services by Google › Install voice data › French (France and Canada). Menu names vary by phone maker.",
+    linux: "On Linux, Chrome includes online Google French voices. Firefox uses your system speech engine: install speech-dispatcher with a French voice (espeak-ng, or a better-sounding engine such as RHVoice or Piper), then restart the browser.",
+    chromeos: "On a Chromebook, add Google French voices in Settings › Accessibility › Text-to-Speech › Text-to-Speech engine settings.",
+    mac: "On a Mac, download better voices: System Settings (System Preferences on older macOS) › Accessibility › Spoken Content › System voice › Manage Voices › French, and pick ones marked Premium or Enhanced (e.g. Thomas for France, Amélie or Nicolas for Canada). Microsoft Edge also has natural online voices.",
+    ios: "On iPhone or iPad, download better voices in Settings › Accessibility › Spoken Content › Voices › French, and pick ones marked Premium or Enhanced.",
+  };
   const voicesFor = (acc) => voices.filter((v) => vLang(v) === ACCENTS[acc].lang.toLowerCase());
   const voiceFor = (acc) => voices.find((x) => x.voiceURI === S.settings[ACCENTS[acc].key]) || voicesFor(acc)[0] || (acc === "fr" ? voices[0] : null);
   function speak(text, rate = S.settings.rate, acc = S.settings.accent) {
@@ -684,7 +698,7 @@
         ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span style="display:flex;gap:8px"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
         <div class="field"><label for="rate">Speed</label><input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="${st.rate}"></div>
         <div class="field"><label for="autoplay">Read the answer aloud after each question</label><input type="checkbox" id="autoplay" ${st.autoplay ? "checked" : ""} style="width:22px;height:22px"></div>
-        <p class="tiny" style="margin:8px 0 0">${!voicesFor("qc").length ? "No Québec voice found. " : ""}For the most natural voices, open this site in Microsoft Edge (its “Natural” voices, e.g. Denise for France and Sylvie or Antoine for Québec, sound human). In Safari or Chrome on a Mac, download better voices: System Settings › Accessibility › Spoken Content › System voice › Manage Voices › French, and pick ones marked Premium or Enhanced (e.g. Thomas for France, Amélie or Nicolas for Canada). Reload the page afterwards.</p>
+        <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${VOICE_HELP[OS] || "For the most natural voices, open this site in Microsoft Edge."} Reload the page afterwards.</p>
       </div>
       <h2>Appearance</h2>
       <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
