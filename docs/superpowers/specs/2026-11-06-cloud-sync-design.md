@@ -101,14 +101,16 @@ The device ID is random and kept in its own local key (`cahier-fr-device`), whic
 - **`srs`, per card:** the larger `m` wins. Ties go to the larger `n`, then the larger JSON string, so the result is deterministic. Old cards without `m` use `last` (or 0).
 - **Daily log, per (device, day):** take the **larger value of each count** (`n`, `ok`, `nw`). This works because counts only ever go up: answering and "I was right" both add, and nothing subtracts. No stamps are needed. The app shows the daily log as the sum over all devices.
 - **`lessons`:** the larger timestamp per lesson wins.
-- **Synced settings:** the larger `setAt` stamp wins. When both stamps are 0 (freshly migrated data), prefer a value that differs from the default, then the larger JSON string. *My call.*
+- **Synced settings:** the larger `setAt` stamp wins. When both stamps are 0 (freshly migrated data), the larger JSON string wins. That only matters the first time two devices that were already in use sync, and it doesn't depend on any version's defaults, so different app versions can't keep flipping a value. *My call.*
+- **Clock limit (documented, accepted):** a card stamped by a device whose clock is fast still beats a newer offline review made on a device that hasn't seen that stamp yet. It only affects that one card's schedule, and the next review fixes it.
 - **Device-only settings** (`voice`, `voiceQc`, `rate`) always keep this device's values and are never pushed.
 
 ### Migration and version safety
 
 - **v1 → v2:** on load, if `cahier-fr-v1` exists, clean it and convert it. Its whole `log` goes into the **`"legacy"`** slot. Cards get `m` from `last`, and settings get `setAt = 0`. Then merge it into v2.
-  - The v1 key is **never deleted, and it's merged in again on every load**. An old tab still open somewhere that keeps saving to v1 therefore loses nothing.
-  - Because the legacy slot merges by maximum, re-merging is harmless.
+  - The v1 key stays, so an old tab still open somewhere that keeps saving to v1 loses nothing. It's merged in again **only when its content has changed** since the last merge (store a hash of it in `cahier-fr-v1-merged`).
+  - Converted v1 data always gets epoch `{ id: "", t: 0 }`, so it loses to any erase.
+  - **Every erase** (this device, everywhere, or while signed out) deletes `cahier-fr-v1` after the backup is saved, so erased progress can't come back from it.
 - **The trade-off of the legacy slot:** on a day *before sync existed* when two devices both practiced, the stats show the larger device's count, not the sum. Undercounting a few old days is accepted, because double counting would be worse. *My call:* reviews and schedules are not affected, only the daily totals.
 - **Old exports** (no `v`) import into the `"legacy"` slot the same way. Importing the same file twice, or several old exports, never double-counts.
 - **v2 exports** have no `log` field, only `logs`. Today's app rejects an import with no `log` ("That file isn't a progress export…"), so already-released versions can't import v2 files and mangle them.
@@ -135,13 +137,16 @@ Deleting needs care, because every other device and the other cloud still hold f
   - **This device only.** It reloads from the cloud on the next sync, which the dialog says.
   - **Everywhere.** It starts a new epoch with empty progress and pushes it to **every linked cloud**. *My call.*
 - **A device whose epoch is older than the cloud's:**
-  - Before discarding anything, it saves its state to the backup.
+  - Sync checks epochs **before** calling `Core.merge`, because merge would silently drop the older side.
+  - If this device has no progress (a brand-new device, or one just erased), it adopts the cloud copy with no prompt.
+  - Otherwise sync **pauses for this device**, writing nothing anywhere, and the status shows "Needs attention" until the learner answers. Before discarding anything, it saves its state to the backup.
   - It asks: "Your progress was erased from another device. Erase it here too, or keep this device's progress and upload it again?"
   - "Upload again" re-stamps this device's data into the new epoch.
   - This is the only prompt of its kind, and either answer keeps a backup.
+  - A linked **cloud** still on an older epoch (for example, linked on another device during the erase) has no one to ask. It is overwritten by the newer epoch, and its old copy goes to that cloud's backup copy first. That's intended, because an "Everywhere" erase means everywhere.
 - **Sign out (per account)** deletes nothing, keeps the local data, warns that this device won't sync with that account anymore, and forgets the in-memory token.
 - **Delete this account's cloud copy** (per account):
-  - It deletes that cloud's file or record **and signs out of that account** on this device. Otherwise the next sync would re-create the copy from the other cloud or from local.
+  - It deletes **everything this app stored in that cloud**: the main file or record, its backup copy (`progress.prev.json` / second record), and any duplicate Drive files. Then it **signs out of that account** on this device. Otherwise the next sync would re-create the copy from the other cloud or from local.
   - The warning says that other devices still signed in to that account will upload their copy again. To erase everywhere, use "Erase all progress → Everywhere".
 - **Erase while signed out:** local only. The note says that signing in again loads the cloud copy back.
 
