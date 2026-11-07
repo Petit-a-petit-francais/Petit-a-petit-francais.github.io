@@ -914,7 +914,7 @@
   const syncPrefs = () => parse(ls.get(SYNC_KEY)) || {};
   const syncPrefsSet = (patch) => ls.set(SYNC_KEY, JSON.stringify({ ...syncPrefs(), ...patch }));
   const accts = {}; // id -> { p, status, detail, at }
-  const ready = {}; // provider SDK loaded, so the next tap can open the popup straight away
+  const ready = {}; // ready.apple === "waiting": Apple sign-in in progress, so keep its hint and button state
   const dismissed = {}; // the epoch question, closed unanswered, isn't asked again until the learner taps "Decide"
   let engine = null;
   let appleBox = null; // CloudKit draws Apple's button into this node once; it's moved back in on every redraw
@@ -1008,31 +1008,71 @@
       : id === "apple" ? "Apple sign-in didn't work in this browser. Try Google instead."
       : `Sign-in didn't work${e && e.message ? `: ${e.message}` : ""}.`);
     renderSyncCard();
+    document.querySelector(`[data-signin="${id}"]`)?.focus({ preventScroll: true }); // the tapped button was re-drawn: keep keyboard focus on it
   }
-  // Google: the first tap loads Google's script; the popup must open straight from a tap, so the second tap signs in.
+  // Sign-in windows. Browsers allow a pop-up only straight from a tap, but Google's and Apple's scripts (and Apple's
+  // sign-in address) arrive later. So the tap opens a compact window at once, and when the provider calls window.open()
+  // it's handed that window instead. If the browser blocks even this one, the provider opens its own as before.
+  const POPUP = { w: 480, h: 640 };
+  function openPopup() {
+    const w = POPUP.w, h = Math.min(POPUP.h, (screen.availHeight || 800) - 40);
+    const left = Math.round(screenX + Math.max(0, (outerWidth - w) / 2)), top = Math.round(screenY + Math.max(0, (outerHeight - h) / 3));
+    const win = window.open("", "", `popup,width=${w},height=${h},left=${left},top=${top}`);
+    if (!win) return null;
+    try { win.document.title = "Signing in…"; win.document.body.textContent = "Opening sign-in…"; } catch (e) { /* not ours to write */ }
+    return win;
+  }
+  // shortcut: swaps window.open while the provider opens its window (synchronously, inside fn); upgrade if Google or
+  // Apple ever accept a window or size of our own
+  function intoPopup(win, fn) {
+    const open = window.open;
+    if (win && !win.closed) window.open = (url) => { win.location.href = url; win.focus(); return win; };
+    try { return fn(); } finally { window.open = open; }
+  }
+  // the learner closed the window without signing in: reset the button. The window also closes itself after a
+  // successful sign-in, a moment before the sign-in finishes here, so wait a little before calling it cancelled.
+  function watchClosed(win, done, onClose, grace = 4000) {
+    if (!win) return;
+    const t = setInterval(() => {
+      if (done()) return clearInterval(t);
+      if (win.closed) { clearInterval(t); setTimeout(() => { if (!done()) onClose(); }, grace); }
+    }, 500);
+  }
+  const waitFor = (find, ms = 20000) => new Promise((resolve) => {
+    const t0 = Date.now(), t = setInterval(() => { const el = find(); if (el || Date.now() - t0 > ms) { clearInterval(t); resolve(el || null); } }, 50);
+  });
+
   function signInGoogle(btn) {
-    const G = window.SyncGoogle;
-    if (!ready.google || !G) {
-      btn.disabled = true;
-      btn.textContent = "Loading…";
-      providerModule("google").then((M) => M.load()).then(() => { ready.google = true; renderSyncCard(); document.querySelector('[data-signin="google"]')?.focus(); })
-        .catch((e) => signInFailed("google", e));
-      return;
-    }
-    G.signIn().then((p) => linkAccount(p, !accts.google)).catch((e) => signInFailed("google", e)); // no await before signIn()
-  }
-  // Apple: CloudKit draws Apple's own button into #apple-sign-in-button; signIn() resolves once the learner uses it.
-  function signInApple(btn) {
+    const win = openPopup();
+    let finished = false;
     btn.disabled = true;
-    btn.textContent = "Loading…";
+    btn.textContent = "Opening Google…"; // Google's script reports a window closed without signing in (popup_closed)
+    providerModule("google").then((M) => M.load())
+      .then(() => intoPopup(win, () => window.SyncGoogle.signIn()))
+      .then((p) => { finished = true; return linkAccount(p, !accts.google); })
+      .catch((e) => { if (finished) return; finished = true; if (win && !win.closed) win.close(); signInFailed("google", e); });
+  }
+  // Apple: CloudKit draws Apple's own button into #apple-sign-in-button and opens its window from that button's click.
+  // With our window open, the button stays hidden and is clicked for the learner; without one, they tap it themselves.
+  function signInApple(btn) {
+    const win = openPopup();
+    let finished = false;
+    btn.disabled = true;
+    btn.textContent = "Opening Apple…";
     ready.apple = "waiting";
-    providerModule("apple").then((M) => {
+    if (win) appleBox.hidden = true;
+    const reset = () => { ready.apple = false; appleBox.hidden = false; appleBox.replaceChildren(); };
+    watchClosed(win, () => finished, () => { finished = true; reset(); signInFailed("apple", { code: "cancelled" }); });
+    providerModule("apple").then(async (M) => {
       const done = M.signIn();
-      btn.hidden = true;
+      const apple = await Promise.race([done.then(() => null, () => null), waitFor(() => appleBox.querySelector(".apple-auth-button"))]);
+      if (apple && win && !win.closed) intoPopup(win, () => apple.click());
+      else if (win && !win.closed) { win.close(); appleBox.hidden = false; } // already signed in, or no window: use Apple's button
+      if (!win) btn.hidden = true;
       document.getElementById("apple-help").hidden = false;
       return done;
-    }).then((p) => { ready.apple = false; appleBox.replaceChildren(); return linkAccount(p, !accts.apple); })
-      .catch((e) => { ready.apple = false; appleBox?.replaceChildren(); signInFailed("apple", e); });
+    }).then((p) => { finished = true; reset(); if (win && !win.closed) win.close(); return linkAccount(p, !accts.apple); })
+      .catch((e) => { if (finished) return; finished = true; reset(); if (win && !win.closed) win.close(); signInFailed("apple", e); });
   }
   async function replaceCloud(id) {
     const p = accts[id].p;
@@ -1053,7 +1093,7 @@
     const order = appleFirst ? ["apple", "google"] : ["google", "apple"];
     const acct = (id) => {
       const a = accts[id], P = PROVIDERS[id], st = a.status;
-      const fix = st === "reconnect" ? `<button class="btn primary" type="button" data-signin="${id}">${id === "google" && !ready.google ? "Reconnect Google" : id === "google" ? "Continue with Google" : "Reconnect iCloud"}</button>`
+      const fix = st === "reconnect" ? `<button class="btn primary" type="button" data-signin="${id}">${id === "google" ? "Reconnect Google" : "Reconnect iCloud"}</button>`
         : st === "unreadable" ? `<button class="btn" type="button" data-act="replace" data-id="${id}">Replace cloud copy with this device's progress</button>`
         : st === "reload" ? `<button class="btn primary" type="button" data-act="reload">Reload</button>`
         : st === "attention" ? `<button class="btn primary" type="button" data-act="decide">Decide</button>` : "";
@@ -1066,7 +1106,7 @@
           ${id === "google" ? `<button class="btn ghost" type="button" data-act="disconnect">Disconnect Google on all devices</button>` : ""}</div></div>`;
     };
     const signIn = (id) => id === "google"
-      ? `<button class="btn" type="button" data-signin="google">${ready.google ? "Continue with Google" : "Sign in with Google"}</button>`
+      ? `<button class="btn" type="button" data-signin="google">Sign in with Google</button>`
       : `<button class="btn" type="button" data-signin="apple"${ready.apple === "waiting" ? " hidden" : ""}>Sign in with Apple</button>`;
     const free = order.filter((id) => !linked.includes(id));
     el.innerHTML = `<p class="muted small" style="margin-top:0">${linked.length
@@ -1074,7 +1114,7 @@
       : "Progress is saved in this browser only. Sign in to keep it on all your devices, stored in your own Google Drive or iCloud. Or export a backup now and then."} <a href="privacy.html">Privacy policy</a></p>
       ${linked.map(acct).join("")}
       ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
-      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in, and tick <b>Keep me signed in</b>: otherwise Apple ends the session after 30 minutes. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
+      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>In Apple's sign-in window, tick <b>Keep me signed in</b>: otherwise Apple ends the session after 30 minutes. If no window opened, use Apple's button above. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
     if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
     else {
       appleBox = document.getElementById("apple-sign-in-button");

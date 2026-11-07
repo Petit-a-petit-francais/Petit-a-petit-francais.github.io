@@ -115,7 +115,7 @@
       root.document.head.append(s);
     }));
   }
-  // Call straight from a tap (after load() finished), or the browser blocks the popup.
+  // Opens Google's window synchronously: call it straight from a tap, or (as app.js does) with a window the tap opened.
   function signIn() {
     return new Promise((resolve, reject) => {
       const ask = (prompt) => root.google.accounts.oauth2.initCodeClient({
