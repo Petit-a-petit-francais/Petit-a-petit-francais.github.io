@@ -6,7 +6,7 @@
   const TENSE_ORDER = ["pres", "pc", "fp", "pr", "impe", "imp", "fut", "cond"];
   const TENSE_EN = { pres: "Present", pc: "Passé composé", fp: "Near future", pr: "Recent past", impe: "Imperative", imp: "Imparfait", fut: "Future", cond: "Conditional" };
   const KEY = "cahier-fr-v2", V1 = "cahier-fr-v1", V1_MERGED = "cahier-fr-v1-merged", V1_RETIRED = "cahier-fr-v1-retired", BACKUP = "cahier-fr-backup";
-  const VERSION = "1.0.0"; // bump with each release tag
+  const VERSION = "1.1.0"; // bump with each release tag
   const REPO = "https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io";
   const DEFAULTS = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: TENSE_ORDER, theme: "auto" };
 

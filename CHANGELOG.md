@@ -4,10 +4,16 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-07
+
 ### Added
 
 - Natural France and Québec voices (Azure Denise and Sylvie) in every browser, including Safari, iPhone, Firefox and Linux. Each phrase is made once and cached; the device voice is the fallback, and device voices can still be picked in Settings (#42).
 - Support links (GitHub Sponsors, Buy Me a Coffee) in Settings › About, the README and the repo's Sponsor button (#46).
+
+### Fixed
+
+- The check badge on learned lessons is a round badge again instead of a tall oval (#44).
 
 ## [1.0.0] - 2026-11-07
 
@@ -34,5 +40,6 @@ First tagged release.
 - iCloud sign-in help (#27), staying signed in to iCloud and showing real sync errors (#33).
 - No focus line around the page (#35).
 
-[Unreleased]: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/releases/tag/v1.0.0
