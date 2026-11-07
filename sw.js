@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Parsa Kamalipour
 // Network first so updates show up as soon as you're online; the cache is the offline fallback.
 // Bump CACHE when files are removed so old copies are dropped.
-const CACHE = "petit-a-petit-v2";
-const APP = ["./", "index.html", "style.css", "core.js", "data.js", "grammar_extra.js", "vocab_extra.js", "app.js", "logo.svg", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-touch-icon.png", "fonts/inter-latin.woff2", "fonts/inter-latin-ext.woff2", "privacy.html"];
+const CACHE = "petit-a-petit-v3";
+const APP = ["./", "index.html", "style.css", "core.js", "data.js", "grammar_extra.js", "vocab_extra.js", "app.js", "sync.js", "sync-config.js", "sync-google.js", "sync-apple.js", "logo.svg", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-touch-icon.png", "fonts/inter-latin.woff2", "fonts/inter-latin-ext.woff2", "privacy.html"];
 
 self.addEventListener("install", (e) => e.waitUntil(
   caches.open(CACHE).then((c) => c.addAll(APP.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting())));

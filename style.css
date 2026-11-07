@@ -416,3 +416,27 @@ html:has(body.focus) { scroll-padding-top: 16px; scroll-padding-bottom: 180px; }
   .tabs a[aria-current="page"], .nav a[aria-current="page"], .tabbar a[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; }
   .card, .list, .hero, .callout, .bar, .track, .goal, .meter { border: 1px solid CanvasText; }
 }
+
+/* cloud sync */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sidebar-foot { display: flex; align-items: center; gap: 8px; }
+.sync-ind { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text-2); position: relative; }
+.sync-ind .i { width: 20px; height: 20px; }
+.sync-ind::after { content: ""; position: absolute; right: 9px; bottom: 11px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--bg); background: var(--success); }
+.sync-ind[data-state="busy"]::after { background: var(--primary); }
+.sync-ind[data-state="off"]::after { background: var(--text-3); }
+.sync-ind[data-state="warn"]::after { background: var(--warning); }
+.sync-acct { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-top: 1px solid var(--border); }
+.sync-acct .grow { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.sync-status { display: block; margin-top: 2px; }
+.sync-status[data-state="synced"] { color: var(--success); }
+.sync-status:is([data-state="reconnect"], [data-state="unreadable"], [data-state="reload"], [data-state="localfail"], [data-state="attention"], [data-state="other"]) { color: var(--warning); }
+.sync-btns, .sync-signin { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-signin { padding-top: 12px; }
+#apple-sign-in-button:not(:empty) { margin-top: 12px; max-width: 280px; }
+.stack-btns { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 20px; margin-bottom: 20px; background: var(--primary-soft); border-color: transparent; }
+.nudge > .i { width: 24px; height: 24px; color: var(--primary); flex: none; }
+.nudge p { margin: 0; flex: 1 1 260px; color: var(--text); }
+.nudge-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 420px) { .streak-mini .streak-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .sync-ind { width: 40px; } }

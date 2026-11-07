@@ -5,19 +5,92 @@
   const { TENSES } = Core;
   const TENSE_ORDER = ["pres", "pc", "fp", "pr", "impe", "imp", "fut", "cond"];
   const TENSE_EN = { pres: "Present", pc: "Passé composé", fp: "Near future", pr: "Recent past", impe: "Imperative", imp: "Imparfait", fut: "Future", cond: "Conditional" };
-  const KEY = "cahier-fr-v1";
+  const KEY = "cahier-fr-v2", V1 = "cahier-fr-v1", V1_MERGED = "cahier-fr-v1-merged", V1_RETIRED = "cahier-fr-v1-retired", BACKUP = "cahier-fr-backup";
   const DEFAULTS = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: TENSE_ORDER, theme: "auto" };
 
   // ---------- storage ----------
+  const ls = {
+    get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }, // storage full or blocked
+    del: (k) => { try { localStorage.removeItem(k); } catch (e) { /* blocked */ } },
+  };
+  const clean = (x) => Core.cleanState(x, DEFAULTS, TENSE_ORDER);
+  const parse = (str) => { try { const x = JSON.parse(str); return x && typeof x === "object" ? x : null; } catch (e) { return null; } };
+  const DEVICE = (() => {
+    let d = ls.get("cahier-fr-device");
+    if (!/^[a-z0-9]{16}$/.test(d || "")) {
+      d = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => "abcdefghijklmnopqrstuvwxyz0123456789"[x % 36]).join("");
+      ls.set("cahier-fr-device", d);
+    }
+    return d;
+  })();
+  const App = { DEVICE, onSaved: null };
+  const stored = (st) => JSON.stringify({ ...st, log: undefined });
   function load() {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && typeof s === "object") return Core.cleanState(s, DEFAULTS, TENSE_ORDER);
-    } catch (e) { /* private mode or corrupt data: start fresh */ }
-    return { srs: {}, log: {}, lessons: {}, settings: { ...DEFAULTS } };
+    const raw = parse(ls.get(KEY));
+    // shortcut: a v2 key written by a newer version is cleaned like any other (its unknown fields are dropped), upgrade when v3 exists
+    let st = raw ? clean(raw) : null, changed = false;
+    const rawV1 = ls.get(V1);
+    // an old tab may still write v1: merge it again only when it changed, and never after an erase
+    if (rawV1 && !ls.get(V1_RETIRED) && Core.hash(rawV1) !== ls.get(V1_MERGED)) {
+      const v1 = parse(rawV1);
+      if (v1) {
+        if (st) ls.set(BACKUP, stored(st));
+        st = st ? Core.merge(st, clean(v1)) : clean(v1);
+        changed = true;
+      }
+      ls.set(V1_MERGED, Core.hash(rawV1));
+    }
+    st ||= Core.emptyState(DEFAULTS, { id: "", t: 0 });
+    st.log = Core.sumLogs(st.logs);
+    if (changed) ls.set(KEY, stored(st));
+    return st;
   }
   let S = load();
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full or blocked */ } };
+  const save = () => {
+    const ok = ls.set(KEY, stored(S));
+    if (ok && App.onSaved) App.onSaved();
+    return ok;
+  };
+  // Replace the whole state (sync, import, erase): back up the old one first. False if it couldn't be saved.
+  const REPLACED = "cahier-fr-replaced"; // changes on every whole-state replace, so other tabs adopt it instead of merging
+  let seenReplace = ls.get(REPLACED);
+  function replaceState(next, why) {
+    const prev = S;
+    ls.set(BACKUP, stored(S));
+    // a sync result is safe to merge in other tabs; an erase, import or "cloud only" must be adopted as is
+    if (why !== "sync") ls.set(REPLACED, (seenReplace = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`));
+    S = next;
+    S.log = Core.sumLogs(S.logs);
+    const ok = save();
+    if (!ok) { S = prev; return false; } // never keep (or later push) a state this device couldn't save
+    applyTheme();
+    if (!session) route(); // never yank the learner out of a running session
+    else renderNav();
+    return ok;
+  }
+  // another tab of this site saved: take its progress in (it already saved, so don't save again).
+  // After an erase or other whole-state replace there, adopt its state: merging would bring the erased progress back.
+  function takeStored(str) {
+    const o = parse(str);
+    if (!o || Core.tooNew(o)) return;
+    const r = ls.get(REPLACED);
+    if (r !== seenReplace) {
+      seenReplace = r;
+      S = clean(o);
+      S.log = Core.sumLogs(S.logs);
+      applyTheme();
+      if (!session) route(); else renderNav();
+      return;
+    }
+    S = Core.merge(S, clean(o));
+    S.log = Core.sumLogs(S.logs);
+  }
+  window.addEventListener("storage", (e) => { if (e.key === KEY) takeStored(e.newValue); });
+  // back from the back/forward cache: this page missed the other tabs' storage events
+  window.addEventListener("pageshow", (e) => { if (e.persisted) takeStored(ls.get(KEY)); });
+  Object.assign(App, { getState: () => S, replaceState, clean, empty: (epoch) => Core.emptyState(DEFAULTS, epoch) });
+  window.App = App;
 
   const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -42,6 +115,7 @@
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>',
     print: '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
+    cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>',
     refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
   };
   const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
@@ -134,11 +208,14 @@
     (pair ? `<button class="say alt" type="button" data-say="${esc(text)}" data-accent="${other()}" aria-label="${label} with a ${ACCENTS[other()].name} accent: ${esc(text)}" title="${label} (${ACCENTS[other()].name})">${other().toUpperCase()}</button>` : "");
 
   // ---------- progress & stats ----------
+  const dayLog = () => ((S.logs[DEVICE] ||= {})[today()] ||= { n: 0, ok: 0, nw: 0 });
+  const review = (id, prev, score) => (S.srs[id] = { ...Core.schedule(prev, score), m: Core.stamp(S) });
   function logResult(score, wasNew) {
-    const d = (S.log[today()] ||= { n: 0, ok: 0, nw: 0 });
+    const d = dayLog();
     d.n++;
     if (score > 0) d.ok++;
     if (wasNew) d.nw++;
+    S.log = Core.sumLogs(S.logs);
   }
   function streak() {
     let n = 0;
@@ -268,7 +345,7 @@
         <a class="icon-btn" href="#/settings" aria-label="Settings (voice and accent)" title="Settings (voice and accent)">${icon("settings")}</a></div>
       <div class="session-body">
         <div class="q-label">${esc(card.label)}${isNew ? ' <span class="badge blue">New</span>' : ""}</div>
-        <form id="card" autocomplete="off" onsubmit="return false">${card.body}</form>
+        <form id="card" autocomplete="off">${card.body}</form>
         ${accentBar()}
       </div>
       <div class="bar" id="bar"><div class="bar-inner">
@@ -310,7 +387,7 @@
     main.querySelector(".reveal-en")?.remove();
 
     const prev = S.srs[it.id];
-    S.srs[it.id] = Core.schedule(prev, score);
+    review(it.id, prev, score);
     logResult(score, !prev);
     save();
     const full = card.full(res.map((r) => r.best));
@@ -351,8 +428,8 @@
   // the grader was wrong (a valid alternative, a typo the learner disputes, etc.)
   function override() {
     const s = session, { it, prev } = s.last;
-    S.srs[it.id] = Core.schedule(prev, 2);
-    if (s.last.score === 0) S.log[today()].ok++;
+    review(it.id, prev, 2);
+    if (s.last.score === 0) { dayLog().ok++; S.log = Core.sumLogs(S.logs); }
     s.results[s.results.length - 1].score = 2;
     if (s.requeued[it.id]) {
       const k = s.queue.indexOf(it, s.i + 1);
@@ -378,7 +455,9 @@
     const all = [...first.values()];
     const ok = all.filter((r) => r.score > 0).length;
     const missed = all.filter((r) => r.score === 0);
-    if (s.lesson) { S.lessons[s.lesson] = Date.now(); save(); }
+    if (s.lesson) { S.lessons[s.lesson] = Core.stamp(S); save(); }
+    const nd = syncPrefs().nudge || {};
+    syncPrefsSet({ nudge: { ...nd, sessions: (nd.sessions || 0) + 1 } });
     session = null;
     const pct = Math.round((ok / all.length) * 100);
     main.innerHTML = `<div class="done">
@@ -513,7 +592,7 @@
     dialog.showModal();
     document.getElementById("dialog-body").scrollTop = 0;
   }
-  const openLessonDialog = (l) => openDialog(l.title, lessonBody(l, true) + `<p style="margin-top:20px"><button class="btn primary" type="button" onclick="this.closest('dialog').close()">Back to practice</button></p>`);
+  const openLessonDialog = (l) => openDialog(l.title, lessonBody(l, true) + `<p style="margin-top:20px"><button class="btn primary" type="button" data-close-dialog>Back to practice</button></p>`);
 
   // ---------- pages ----------
   function pageHome() {
@@ -537,6 +616,7 @@
     }
     main.innerHTML = `<div class="page">
       <div class="page-head"><div><h1>${hello} !</h1><p class="lead" style="margin:0">${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }))}</p></div></div>
+      ${nudgeHtml()}
       <div class="home-top">
         <section class="card pad-lg hero" aria-labelledby="today-h">
           <span class="label" id="today-h">Today's review</span>
@@ -669,7 +749,7 @@
     }
     main.innerHTML = `<div class="page">
       <div class="page-head"><div><h1>Cheatsheets</h1><p class="lead" style="margin:0">Everything from your course on one page per area. Search it, or print it.</p></div>
-        <button class="btn no-print" type="button" onclick="window.print()">${icon("print")} Print</button></div>
+        <button class="btn no-print" type="button" data-print>${icon("print")} Print</button></div>
       <nav class="tabs no-print" aria-label="Cheatsheet">${tabs.map(([k, n]) => `<a href="#/cheatsheets/${k}" ${k === tab ? 'aria-current="page"' : ""}>${n}</a>`).join("")}</nav>
       <p class="no-print"><input type="search" id="find" placeholder="Search ${tab === "verbs" ? "verbs (e.g. prendre, to take)" : tab === "vocab" ? "words in French or English" : "rules (e.g. depuis, qui, au)"}" aria-label="Search this cheatsheet"></p>
       <p class="tiny" id="found" role="status"></p>
@@ -718,7 +798,7 @@
     main.querySelectorAll("[data-verb]").forEach((b) => (b.onclick = () => {
       const V = VERBS.find((v) => v.inf === b.dataset.verb);
       openDialog(`${V.inf} · ${V.en}`, `<p class="muted small">Auxiliary: ${V.aux === "e" ? "être" : "avoir"} · past participle: ${esc(V.pp)}</p>${conjTable(V, TENSE_ORDER)}
-        <p style="margin-top:16px"><a class="btn primary" href="#/drill?k=verb&v=${encodeURIComponent(V.inf)}" onclick="this.closest('dialog').close()">Practise this verb</a></p>`);
+        <p style="margin-top:16px"><a class="btn primary" href="#/drill?k=verb&v=${encodeURIComponent(V.inf)}" data-close-dialog>Practise this verb</a></p>`);
     }));
   }
 
@@ -743,13 +823,18 @@
       </div>
       <h2>Appearance</h2>
       <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
-      <h2>Your data</h2>
-      <div class="card"><p class="muted small">Progress is saved in this browser only. Export a backup now and then so clearing browser data doesn't erase it. <a href="privacy.html">Privacy policy</a></p>
-        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:0"><button class="btn" type="button" id="export">Export progress</button>
+      <h2 id="sync">Sync across devices</h2>
+      <div class="card"><div id="sync-card"></div>
+        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0"><button class="btn" type="button" id="export">Export progress</button>
         <label class="btn" for="import">Import progress</label><input type="file" id="import" accept="application/json" hidden>
         <button class="btn ghost" type="button" id="reset" style="color:var(--danger)">Erase all progress</button></p>
         <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div></div>`;
-    const set = (k, v) => { st[k] = v; save(); renderNav(); };
+    const set = (k, v) => {
+      S.settings[k] = v;
+      if (Core.SYNCED.includes(k)) S.setAt[k] = Core.stamp(S);
+      save();
+      renderNav();
+    };
     const num = (id, lo, hi) => (document.getElementById(id).onchange = (e) => { const v = Math.min(hi, Math.max(lo, +e.target.value || lo)); e.target.value = v; set(id, v); });
     num("newPerDay", 0, 100);
     num("sessionSize", 5, 100);
@@ -764,9 +849,10 @@
     document.getElementById("autoplay").onchange = (e) => set("autoplay", e.target.checked);
     document.getElementById("theme").onchange = (e) => { set("theme", e.target.value); applyTheme(); };
     const msg = (t) => (document.getElementById("msg").textContent = t);
+    renderSyncCard();
     document.getElementById("export").onclick = () => {
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: "application/json" }));
+      a.href = URL.createObjectURL(new Blob([JSON.stringify({ ...S, log: undefined }, null, 1)], { type: "application/json" }));
       a.download = `french-progress-${today()}.json`;
       a.click();
       msg("Progress exported.");
@@ -774,21 +860,272 @@
     document.getElementById("import").onchange = async (e) => {
       try {
         const data = JSON.parse(await e.target.files[0].text());
-        if (!data || typeof data.srs !== "object" || typeof data.log !== "object") throw new Error("shape");
-        S = Core.cleanState(data, DEFAULTS, TENSE_ORDER);
-        save();
-        msg(`Imported ${Object.keys(S.srs).length} cards.`);
+        if (Core.tooNew(data)) return msg("A newer version of the site saved your progress. Reload to update.");
+        if (!data || typeof data.srs !== "object" || (typeof data.log !== "object" && typeof data.logs !== "object")) throw new Error("shape");
+        const n = Object.keys(clean(data).srs).length;
+        if (!replaceState(Core.merge(S, clean(data)), "import")) return msg("Couldn't save on this device.");
+        msg(`Imported ${n} cards.`);
       } catch (err) {
         msg("That file isn't a progress export from this site. Nothing was changed.");
       }
     };
-    document.getElementById("reset").onclick = () => {
-      if (!confirm("Erase all progress, lessons and statistics? Export a backup first if you want to keep them.")) return;
-      S = { srs: {}, log: {}, lessons: {}, settings: { ...DEFAULTS } };
-      save();
+    const eraseHere = () => {
+      if (!replaceState(Core.emptyState(DEFAULTS, S.epoch), "erase")) return msg("Couldn't save on this device, so nothing was erased."); // backs up first
+      retireV1();
       msg("All progress erased.");
     };
+    document.getElementById("reset").onclick = () => {
+      if (!syncLinked().length) {
+        if (confirm("Erase all progress, lessons and statistics on this device? Export a backup first if you want to keep them. If you've synced before, signing in again brings your cloud copy back.")) eraseHere();
+        return;
+      }
+      openDialog("Erase all progress?", `<p>Export a backup first if you want to keep it.</p>
+        <p class="stack-btns"><button class="btn" type="button" data-erase="here">This device only</button><span class="tiny">Your progress comes back from the cloud on the next sync.</span></p>
+        <p class="stack-btns"><button class="btn" type="button" data-erase="all" style="color:var(--danger)">Everywhere</button><span class="tiny">Erases it on this device, in every cloud you're signed in to, and on your other devices when they next sync.</span></p>`);
+      document.querySelectorAll("[data-erase]").forEach((b) => (b.onclick = async () => {
+        dialog.close();
+        if (b.dataset.erase === "here") return eraseHere();
+        retireV1();
+        msg(await syncEngine().eraseEverywhere() ? "All progress erased everywhere." : "Couldn't save on this device, so nothing was erased.");
+      }));
+    };
   }
+
+  const retireV1 = () => { ls.del(V1); ls.set(V1_RETIRED, "1"); };
+
+  // ---------- cloud sync (optional sign-in; nothing loads from Google or Apple until someone uses it) ----------
+  const SYNC_KEY = "cahier-fr-sync";
+  const PROVIDERS = { google: { name: "Google", cloud: "Google Drive", mod: "SyncGoogle" }, apple: { name: "Apple", cloud: "iCloud", mod: "SyncApple" } };
+  const syncPrefs = () => parse(ls.get(SYNC_KEY)) || {};
+  const syncPrefsSet = (patch) => ls.set(SYNC_KEY, JSON.stringify({ ...syncPrefs(), ...patch }));
+  const accts = {}; // id -> { p, status, detail, at }
+  const ready = {}; // provider SDK loaded, so the next tap can open the popup straight away
+  const dismissed = {}; // the epoch question, closed unanswered, isn't asked again until the learner taps "Decide"
+  let engine = null;
+  let appleBox = null; // CloudKit draws Apple's button into this node once; it's moved back in on every redraw
+  const syncLinked = () => Object.keys(accts);
+  const appleFirst = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(Object.assign(new Error("offline"), { code: "offline" }));
+    document.head.append(s);
+  });
+  async function providerModule(id) {
+    const name = PROVIDERS[id].mod;
+    if (!window[name]) await loadScript(`sync-${id}.js`);
+    return window[name];
+  }
+  function syncEngine() {
+    if (!engine) {
+      engine = Sync.create({ app: App, core: Core, ask: askSync, onStatus: setSyncStatus });
+      engine.start().catch(() => {}); // save, back online and tab-visible triggers
+    }
+    return engine;
+  }
+  const announce = (t) => { const el = document.getElementById("sync-live"); if (el) el.textContent = t; };
+  const STATUS_TEXT = {
+    syncing: () => "Syncing…",
+    synced: (a) => (Date.now() - a.at < 60e3 ? "Synced just now" : `Synced at ${new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`),
+    offline: () => "Offline, will sync later",
+    reconnect: (a, id) => `Signed out of ${PROVIDERS[id].cloud}. Reconnect to keep syncing.`,
+    unreadable: () => "The cloud copy can't be read, so it was left alone.",
+    reload: () => "A newer version of the site saved your progress. Reload to update.",
+    localfail: () => "Couldn't save on this device",
+    attention: () => "Needs attention",
+    other: (a) => `Couldn't sync${a.detail ? `: ${a.detail}` : ""}`,
+  };
+  const statusText = (id) => { const a = accts[id]; return (STATUS_TEXT[a.status] || STATUS_TEXT.other)(a, id); };
+  // one word for the top bar
+  function overall() {
+    const st = syncLinked().map((id) => accts[id].status);
+    if (st.some((x) => !["synced", "syncing", "offline"].includes(x))) return "Needs attention";
+    if (st.includes("offline")) return "Offline";
+    if (st.includes("syncing")) return "Syncing…";
+    return "Synced";
+  }
+  function setSyncStatus(id, status, detail) {
+    const a = (accts[id] ||= {});
+    const changed = a.status !== status;
+    Object.assign(a, { status, detail: detail || "" }, status === "synced" ? { at: Date.now() } : {});
+    if (changed && status !== "syncing") announce(`${PROVIDERS[id].cloud}: ${statusText(id)}`);
+    renderNav();
+    renderSyncCard();
+  }
+  // the engine's questions, as dialogs; closing one unanswered leaves sync paused ("Needs attention")
+  const QUESTIONS = {
+    epoch: { title: "Progress erased elsewhere", text: "Your progress was erased from another device. Erase it here too, or keep this device's progress and upload it again?", answers: [["erase", "Erase it here too"], ["upload", "Keep and upload again"]] },
+    account: { title: "Add this device's progress?", text: "Add this device's progress to this account, or start from this account's cloud progress only?", answers: [["add", "Add this device's progress"], ["cloud", "Use the cloud progress only"]] },
+  };
+  function askSync(kind) {
+    if (dismissed[kind]) return Promise.resolve(null); // only the background (epoch) question stays quiet once closed
+    const q = QUESTIONS[kind];
+    return new Promise((resolve) => {
+      let answer = null;
+      openDialog(q.title, `<p>${q.text}</p><p class="tiny">Either way, a backup of this device's progress is kept.</p>
+        <p style="display:flex;gap:8px;flex-wrap:wrap">${q.answers.map(([v, l], i) => `<button class="btn${i ? "" : " primary"}" type="button" data-answer="${v}">${l}</button>`).join("")}</p>`);
+      document.querySelectorAll("[data-answer]").forEach((b) => (b.onclick = () => { answer = b.dataset.answer; dialog.close(); }));
+      dialog.addEventListener("close", () => { if (!answer && kind === "epoch") dismissed.epoch = true; resolve(answer); }, { once: true });
+    });
+  }
+  function confirmDialog(title, text, action, label, danger) {
+    openDialog(title, `<p>${text}</p><p style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="confirm-yes"${danger ? ' style="background:var(--danger);border-color:var(--danger)"' : ""}>${label}</button><button class="btn" type="button" id="confirm-no">Cancel</button></p>`);
+    document.getElementById("confirm-no").onclick = () => dialog.close();
+    document.getElementById("confirm-yes").onclick = async () => {
+      dialog.close();
+      try { await action(); } catch (e) { announce(`That didn't work: ${e.message || "network error"}. Try again later.`); renderSyncCard(); }
+    };
+  }
+  async function linkAccount(p, fresh) {
+    accts[p.id] = { ...accts[p.id], p, status: "syncing" };
+    const ok = await syncEngine().link(p, { fresh });
+    if (!ok) { if (!fresh) return; delete accts[p.id]; renderNav(); renderSyncCard(); return; }
+    syncPrefsSet({ nudge: { ...syncPrefs().nudge, off: true } }); // signed in: no more reminders
+    p.loadLabel?.().then(() => renderSyncCard());
+    renderSyncCard();
+  }
+  function signInFailed(id, e) {
+    const c = e && e.code;
+    announce(c === "popup" ? "Your browser blocked the sign-in window. Tap the button again."
+      : c === "cancelled" ? "Sign-in cancelled."
+      : c === "offline" ? "You're offline. Try again when you're connected."
+      : id === "apple" ? "Apple sign-in didn't work in this browser. Try Google instead."
+      : `Sign-in didn't work${e && e.message ? `: ${e.message}` : ""}.`);
+    renderSyncCard();
+  }
+  // Google: the first tap loads Google's script; the popup must open straight from a tap, so the second tap signs in.
+  function signInGoogle(btn) {
+    const G = window.SyncGoogle;
+    if (!ready.google || !G) {
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+      providerModule("google").then((M) => M.load()).then(() => { ready.google = true; renderSyncCard(); document.querySelector('[data-signin="google"]')?.focus(); })
+        .catch((e) => signInFailed("google", e));
+      return;
+    }
+    G.signIn().then((p) => linkAccount(p, !accts.google)).catch((e) => signInFailed("google", e)); // no await before signIn()
+  }
+  // Apple: CloudKit draws Apple's own button into #apple-sign-in-button; signIn() resolves once the learner uses it.
+  function signInApple(btn) {
+    btn.disabled = true;
+    btn.textContent = "Loading…";
+    ready.apple = "waiting";
+    providerModule("apple").then((M) => {
+      const done = M.signIn();
+      btn.hidden = true;
+      document.getElementById("apple-help").hidden = false;
+      return done;
+    }).then((p) => { ready.apple = false; appleBox.replaceChildren(); return linkAccount(p, !accts.apple); })
+      .catch((e) => { ready.apple = false; appleBox?.replaceChildren(); signInFailed("apple", e); });
+  }
+  async function replaceCloud(id) {
+    const p = accts[id].p;
+    const { copies } = await p.pull();
+    await p.push(JSON.stringify(Core.syncView(S)), copies.map((c) => c.ref));
+    await syncEngine().run();
+  }
+  async function signOutOf(id) {
+    await syncEngine().unlink(id);
+    delete accts[id];
+    renderNav();
+    renderSyncCard();
+  }
+  function renderSyncCard() {
+    const el = document.getElementById("sync-card");
+    if (!el) return;
+    const linked = syncLinked();
+    const order = appleFirst ? ["apple", "google"] : ["google", "apple"];
+    const acct = (id) => {
+      const a = accts[id], P = PROVIDERS[id], st = a.status;
+      const fix = st === "reconnect" ? `<button class="btn primary" type="button" data-signin="${id}">${id === "google" && !ready.google ? "Reconnect Google" : id === "google" ? "Continue with Google" : "Reconnect iCloud"}</button>`
+        : st === "unreadable" ? `<button class="btn" type="button" data-act="replace" data-id="${id}">Replace cloud copy with this device's progress</button>`
+        : st === "reload" ? `<button class="btn primary" type="button" data-act="reload">Reload</button>`
+        : st === "attention" ? `<button class="btn primary" type="button" data-act="decide">Decide</button>` : "";
+      return `<div class="sync-acct">
+        <div class="grow"><b>${P.cloud}</b>${a.p && a.p.label && a.p.label !== P.cloud ? ` <span class="muted">· ${esc(a.p.label)}</span>` : ""}
+          <span class="tiny sync-status" data-state="${esc(st || "")}">${esc(statusText(id))}</span></div>
+        <div class="sync-btns">${fix}
+          <button class="btn" type="button" data-act="signout" data-id="${id}">Sign out</button>
+          <button class="btn ghost" type="button" data-act="delete" data-id="${id}" style="color:var(--danger)">Delete cloud copy</button>
+          ${id === "google" ? `<button class="btn ghost" type="button" data-act="disconnect">Disconnect Google on all devices</button>` : ""}</div></div>`;
+    };
+    const signIn = (id) => id === "google"
+      ? `<button class="btn" type="button" data-signin="google">${ready.google ? "Continue with Google" : "Sign in with Google"}</button>`
+      : `<button class="btn" type="button" data-signin="apple"${ready.apple === "waiting" ? " hidden" : ""}>Sign in with Apple</button>`;
+    const free = order.filter((id) => !linked.includes(id));
+    el.innerHTML = `<p class="muted small" style="margin-top:0">${linked.length
+      ? "Your progress is kept in your own cloud and merged with your other signed-in devices."
+      : "Progress is saved in this browser only. Sign in to keep it on all your devices, stored in your own Google Drive or iCloud. Or export a backup now and then."} <a href="privacy.html">Privacy policy</a></p>
+      ${linked.map(acct).join("")}
+      ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
+      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in.</p>`;
+    if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
+    else {
+      appleBox = document.getElementById("apple-sign-in-button");
+      // Apple draws its button as a plain div: make it reachable and usable from the keyboard
+      new MutationObserver(() => {
+        const d = appleBox.querySelector(".apple-auth-button:not([role])");
+        if (!d) return;
+        Object.assign(d, { tabIndex: 0, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); d.click(); } } });
+        d.setAttribute("role", "button");
+        d.setAttribute("aria-label", "Sign in with Apple");
+        d.focus();
+      }).observe(appleBox, { childList: true, subtree: true });
+    }
+    if (ready.apple === "waiting") document.getElementById("apple-help").hidden = false;
+    el.querySelectorAll("[data-signin]").forEach((b) => (b.onclick = () => (b.dataset.signin === "google" ? signInGoogle(b) : signInApple(b))));
+    el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => {
+      const id = b.dataset.id, cloud = id && PROVIDERS[id].cloud;
+      if (b.dataset.act === "reload") return location.reload();
+      if (b.dataset.act === "decide") { delete dismissed.epoch; return syncEngine().run(); }
+      if (b.dataset.act === "replace") return confirmDialog("Replace the cloud copy?", `The copy in your ${cloud} will be replaced with this device's progress. Its current content is kept as a backup there.`, () => replaceCloud(id), "Replace");
+      if (b.dataset.act === "signout") return confirmDialog(`Sign out of ${cloud}?`, `This device stops syncing with this ${cloud} account. Nothing is deleted: your progress stays here and in the cloud.`, () => signOutOf(id), "Sign out");
+      if (b.dataset.act === "delete") return confirmDialog(`Delete the ${cloud} copy?`, `This deletes everything this site stored in your ${cloud} and signs you out here. Other devices still signed in to this account will upload their copy again. To erase everywhere, use Erase all progress, then Everywhere.`, async () => { await syncEngine().deleteCloud(id); delete accts[id]; renderNav(); renderSyncCard(); }, "Delete", true);
+      if (b.dataset.act === "disconnect") return confirmDialog("Disconnect Google on all devices?", "This signs out Google on every device, and they'll show Reconnect Google. Your progress stays on each device and in Drive.", async () => { await window.SyncGoogle.disconnectAll(); await signOutOf("google"); }, "Disconnect", true);
+    }));
+  }
+  // linked devices: restore each remembered account, then keep syncing
+  async function syncBoot() {
+    if (!window.Sync) return;
+    const ids = Sync.remembered().filter((id) => PROVIDERS[id]);
+    if (!ids.length) return;
+    const e = syncEngine();
+    for (const id of ids) {
+      e.hold(id);
+      accts[id] = { status: "syncing" };
+      try {
+        const p = await (await providerModule(id)).restore();
+        if (p) await linkAccount(p, false);
+        else setSyncStatus(id, "reconnect");
+      } catch (err) { setSyncStatus(id, err && err.code === "auth" ? "reconnect" : "offline", err && err.message); }
+    }
+  }
+  document.addEventListener("DOMContentLoaded", syncBoot);
+
+  // reminders to sign in: after the 1st finished session, 7 and 30 practice days; per device
+  function nudgeLevel() {
+    const n = syncPrefs().nudge || {};
+    if (n.off || syncLinked().length || (syncPrefs().linked || []).length) return 0;
+    const days = Object.values(S.log).filter((d) => d.n > 0).length;
+    const level = days >= 30 ? 3 : days >= 7 ? 2 : (n.sessions || 0) >= 1 ? 1 : 0;
+    return level > (n.seen || 0) ? level : 0;
+  }
+  function nudgeHtml() {
+    const level = nudgeLevel();
+    if (!level) return "";
+    return `<section class="card nudge" aria-label="Sync your progress">${icon("cloud")}
+      <p class="grow">Keep your progress on all your devices: sign in with Google or Apple.</p>
+      <span class="nudge-btns"><a class="btn primary" href="#/settings#sync">Sign in</a><button class="btn" type="button" data-nudge="later" data-level="${level}">Later</button>${level === 3 ? `<button class="btn ghost" type="button" data-nudge="off">Don't ask again</button>` : ""}</span></section>`;
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-nudge]");
+    if (!b) return;
+    const n = syncPrefs().nudge || {};
+    syncPrefsSet({ nudge: b.dataset.nudge === "off" ? { ...n, off: true } : { ...n, seen: +b.dataset.level } });
+    b.closest(".nudge").remove();
+    main.focus();
+  });
 
   function applyTheme() {
     if (S.settings.theme === "auto") document.documentElement.removeAttribute("data-theme");
@@ -805,9 +1142,14 @@
     const link = (k, h, t, ic, short) => `<a href="${h}" ${k === cur ? 'aria-current="page"' : ""}>${icon(ic)}<span>${short ? t.replace("Cheatsheets", "Sheets") : t}</span>${!short && k === "practice" && due ? `<span class="badge blue">${due}</span>` : ""}</a>`;
     document.getElementById("nav").innerHTML = NAV.map((n) => link(...n)).join("");
     document.getElementById("tabbar").innerHTML = NAV.map((n) => link(...n, true)).join("");
-    document.getElementById("sidebar-foot").innerHTML = `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b> day streak</span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
+    const sync = syncLinked().length ? overall() : "";
+    document.getElementById("sidebar-foot").innerHTML = (sync ? `<a class="sync-ind" href="#/settings#sync" data-state="${{ Synced: "ok", "Syncing…": "busy", Offline: "off" }[sync] || "warn"}" aria-label="${sync}" title="${sync}">${icon("cloud")}</a>` : "") + `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b><span class="streak-word"> day streak</span></span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
   }
+  // the answer form only ever submits by Enter, which check() handles
+  document.addEventListener("submit", (e) => { if (e.target.id === "card") e.preventDefault(); });
   document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-close-dialog]")) dialog.close();
+    if (e.target.closest("[data-print]")) print();
     const b = e.target.closest("[data-say]");
     if (b) speak(b.dataset.say, b.dataset.rate ? +b.dataset.rate : undefined, b.dataset.accent);
     const r = e.target.closest(".reveal");
@@ -844,7 +1186,7 @@
       case "review": return startSession(dailyQueue(params.has("more")), { back: "#/" });
       case "dictation": return startDictation();
       case "cheatsheets": return pageSheets(parts[1]);
-      case "settings": return pageSettings();
+      case "settings": { pageSettings(); const a = location.hash.split("#")[2]; if (a) document.getElementById(a)?.scrollIntoView(); return; }
       case "drill": {
         const k = params.get("k"), g = params.get("g");
         const pools = {
@@ -865,5 +1207,6 @@
   window.addEventListener("hashchange", route);
   applyTheme();
   route();
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
   window.__cahier = { ITEMS, VERBS, LESSONS, state: () => S, session: () => session }; // handle for automated checks
 })();

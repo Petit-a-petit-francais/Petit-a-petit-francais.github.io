@@ -16,6 +16,8 @@
 <meta name="apple-mobile-web-app-title" content="Petit à petit">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="style.css">
+<!-- no style-src: app.js writes inline style="" attributes. Sign-in windows are popups, so they need no frame-src. -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://accounts.google.com/gsi/ https://cdn.apple-cloudkit.com; connect-src 'self' https://www.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://petitfrench-token-helper.token-helper.workers.dev https://api.apple-cloudkit.com https://*.icloud-content.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -28,6 +30,7 @@
   <main id="main" tabindex="-1"></main>
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main navigation"></nav>
+<p id="sync-live" class="sr-only" role="status"></p>
 <dialog id="dialog" aria-labelledby="dialog-title">
   <div class="dialog-head"><h2 id="dialog-title"></h2><button class="icon-btn" type="button" id="dialog-close" aria-label="Close"></button></div>
   <div class="dialog-body" id="dialog-body"></div>
@@ -37,6 +40,7 @@
 <script src="grammar_extra.js"></script>
 <script src="vocab_extra.js"></script>
 <script src="app.js"></script>
-<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");</script>
+<script src="sync-config.js"></script>
+<script src="sync.js"></script>
 </body>
 </html>
