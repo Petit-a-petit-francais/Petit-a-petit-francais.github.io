@@ -11,7 +11,7 @@ ALLOWED_ORIGIN = "https://petit-a-petit-francais.github.io, https://petitfrench.
 
 [[kv_namespaces]]
 binding = "CLIPS"
-id = "REPLACE_WITH_KV_ID"
+id = "9fd6d2343d3c4bada676fcbc28f94bf0"
 
 # logs nothing
 [observability]
