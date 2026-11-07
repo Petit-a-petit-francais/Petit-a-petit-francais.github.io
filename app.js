@@ -283,7 +283,7 @@
       return {
         label: "Translate into French",
         body: `<p class="q-prompt">${esc(it.en)}</p><p class="q-sub">${article ? "Include the article (le, la, l', les)." : "Type the French word or phrase."}</p>
-          <input class="ans wide" data-i="0" ${inputAttrs} aria-label="Answer in French" placeholder="En français…">`,
+          <input class="ans wide" lang="fr" data-i="0" ${inputAttrs} aria-label="Answer in French" placeholder="En français…">`,
         blanks: [[it.fr, ...SAME_EN.get(it.en.toLowerCase().replace(/\s*\(.*?\)\s*/g, " ").trim()).filter((f) => f !== it.fr)]],
         noArticle: article ? it.fr.slice(article[0].length) : null,
         full: () => it.fr,
@@ -296,13 +296,13 @@
       if (typeof p === "string") return esc(p);
       const i = blanks.push(p.answers) - 1;
       const w = Math.max(4, ...p.answers.map((a) => a.length)) + 2;
-      if (whole) return `<input class="ans wide" data-i="${i}" ${inputAttrs} aria-label="Your sentence" placeholder="Write the full sentence…">`;
+      if (whole) return `<input class="ans wide" lang="fr" data-i="${i}" ${inputAttrs} aria-label="Your sentence" placeholder="Write the full sentence…">`;
       return `<span class="blank"><input class="ans" data-i="${i}" ${inputAttrs} size="${w}" aria-label="Blank ${i + 1}${p.hint ? ": " + esc(p.hint) : ""}">${p.hint ? `<span class="hint">${esc(p.hint)}</span>` : ""}</span>`;
     }).join("");
     return {
       label: it.q ? "Rewrite the sentence" : "Fill in the blank" + (blanks.length > 1 ? "s" : ""),
       body: it.q
-        ? `<p class="q-prompt">${esc(it.q.replace(/^.*?:\s*/, ""))}</p><p class="q-sub">${esc(it.q.split(":")[0])}</p>${body}`
+        ? `<p class="q-prompt" lang="fr">${esc(it.q.replace(/^.*?:\s*/, ""))}</p><p class="q-sub" lang="fr">${esc(it.q.split(":")[0])}</p>${body}`
         : `<p class="q-prompt" lang="fr">${body}</p><div class="reveal-en"><button type="button" class="reveal">Show English translation</button><span hidden class="muted">${esc(it.en)}</span></div>`,
       blanks,
       full: (b) => { let k = 0; return parts.map((p) => (typeof p === "string" ? p : b[k++])).join(""); },
@@ -325,7 +325,7 @@
 
   function startSession(queue, opts) {
     if (!queue.length) {
-      main.innerHTML = `<div class="page empty"><h1>Nothing to practise here right now</h1><p class="lead" style="margin:0 auto 20px">Every card in this set is scheduled for later. Pick another topic, or learn new cards.</p><a class="btn primary" href="${opts.back}">Go back</a></div>`;
+      main.innerHTML = `<div class="page empty"><h1>Nothing to practise here right now</h1><p class="lead">Every card in this set is scheduled for later. Pick another topic, or learn new cards.</p><a class="btn primary" href="${opts.back}">Go back</a></div>`;
       return;
     }
     document.body.classList.add("focus");
@@ -343,11 +343,11 @@
         <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="${s.queue.length}" aria-valuenow="${s.i}" aria-label="Session progress"><i style="width:${(s.i / s.queue.length) * 100}%"></i></div>
         <span class="count">${s.i + 1} / ${s.queue.length}</span>
         <a class="icon-btn" href="#/settings" aria-label="Settings (voice and accent)" title="Settings (voice and accent)">${icon("settings")}</a></div>
-      <div class="session-body">
+      <div class="session-body"><div class="sheet ruled">
         <div class="q-label">${esc(card.label)}${isNew ? ' <span class="badge blue">New</span>' : ""}</div>
         <form id="card" autocomplete="off">${card.body}</form>
         ${accentBar()}
-      </div>
+      </div></div>
       <div class="bar" id="bar"><div class="bar-inner">
         <button class="btn ghost" id="idk" type="button">I don't know <kbd>Esc</kbd></button><span class="spacer"></span>
         <button class="btn primary lg" id="check" type="button">Check <kbd>Enter</kbd></button></div></div>
@@ -462,10 +462,10 @@
     const pct = Math.round((ok / all.length) * 100);
     main.innerHTML = `<div class="done">
       <h1>${s.lesson ? "Lesson complete" : "Session complete"}</h1>
-      <p class="score">${pct}%</p>
+      <p class="score${pct < 60 ? " low" : ""}">${pct}%</p>
       <p class="lead" style="margin:0 auto">${ok} of ${all.length} right on the first try.${s.lesson ? " The new cards from this lesson are now in your daily review." : ""}</p>
-      ${missed.length ? `<ul aria-label="To review">${missed.map((r) => `<li>${sayBtn(r.full)}<span lang="fr">${esc(r.full)}</span><span class="tiny">${esc(r.it.type === "conj" ? label(r.it) : r.it.group)}</span></li>`).join("")}</ul><p class="tiny">These come back first in your next review.</p>` : `<p style="margin-top:16px">No mistakes. Excellent.</p>`}
-      <p style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+      ${missed.length ? `<ul aria-label="To review">${missed.map((r) => `<li>${sayBtn(r.full)}<span lang="fr">${esc(r.full)}</span><span class="tiny">${esc(r.it.type === "conj" ? label(r.it) : r.it.group)}</span></li>`).join("")}</ul><p class="tiny">These come back first in your next review.</p>` : `<p class="muted" style="margin-top:16px">No mistakes. Excellent.</p>`}
+      <p class="done-btns">
         <a class="btn primary lg" href="${s.back}" id="done">${s.back === "#/" ? "Back to home" : "Done"}</a>
         <button class="btn lg" type="button" id="again">Practise again</button></p></div>`;
     document.getElementById("done").focus();
@@ -496,19 +496,19 @@
     const show = () => {
       if (i >= q.length) {
         main.innerHTML = `<div class="done"><h1>Dictation complete</h1><p class="score">${ok} / ${q.length}</p><p class="lead" style="margin:0 auto">sentences written without a mistake.</p>
-          <p style="display:flex;gap:10px;justify-content:center;margin-top:24px"><a class="btn primary lg" href="#/practice">Done</a><button class="btn lg" id="again" type="button">Another dictation</button></p></div>`;
+          <p class="done-btns"><a class="btn primary lg" href="#/practice">Done</a><button class="btn lg" id="again" type="button">Another dictation</button></p></div>`;
         document.getElementById("again").onclick = route;
         return;
       }
       const d = q[i];
       main.innerHTML = `<div class="session">
         <div class="session-top"><a class="icon-btn" href="#/practice" aria-label="End dictation">${icon("x")}</a><div class="track"><i style="width:${(i / q.length) * 100}%"></i></div><span class="count">${i + 1} / ${q.length}</span></div>
-        <div class="session-body"><div class="q-label">Type what you hear</div>
-          <p style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px"><button class="btn primary lg" type="button" data-say="${esc(d.text)}">${icon("volume")} Play</button>
+        <div class="session-body"><div class="sheet ruled"><div class="q-label">Type what you hear</div>
+          <p class="dict-play"><button class="btn primary lg" type="button" data-say="${esc(d.text)}">${icon("volume")} Play</button>
           <button class="btn lg" type="button" data-say="${esc(d.text)}" data-rate="0.6">Play slowly</button>
           <button class="btn lg" type="button" data-say="${esc(d.text)}" data-accent="${other()}">Play with ${ACCENTS[other()].name} accent</button></p>
-          <input class="ans wide" ${inputAttrs} placeholder="Écris ce que tu entends…" aria-label="What you hear">
-          ${accentBar()}</div>
+          <input class="ans wide" lang="fr" ${inputAttrs} placeholder="Écris ce que tu entends…" aria-label="What you hear">
+          ${accentBar()}</div></div>
         <div class="bar" id="bar"><div class="bar-inner"><span class="spacer"></span><button class="btn primary lg" id="check" type="button">Check <kbd>Enter</kbd></button></div></div></div>`;
       const input = main.querySelector(".ans");
       input.focus();
@@ -544,9 +544,11 @@
     const n = pool.length || 1, m = pool.filter(mastered).length, s = pool.filter((it) => S.srs[it.id] && !mastered(it)).length;
     return `<div class="meter" role="img" aria-label="${m} mastered, ${s} in progress, of ${pool.length}"><i class="m" style="width:${(m / n) * 100}%"></i><i class="s" style="width:${(s / n) * 100}%"></i></div>`;
   }
-  const seenOf = (pool) => `${pool.filter((it) => S.srs[it.id]).length} / ${pool.length} seen`;
-  const tile = (href, title, pool, badge = "") =>
-    `<a class="card tile" href="${href}"><div class="top"><h3>${esc(title)}</h3>${badge}</div><span class="tiny">${seenOf(pool)}</span>${meter(pool)}</a>`;
+  // one topic row in a practice list: French name, English gloss if any, cards seen, mastery meter
+  const tile = (href, title, pool, sub = "", lang = "fr") => {
+    const seen = pool.filter((it) => S.srs[it.id]).length;
+    return `<a class="topic" href="${href}"><b lang="${lang}">${esc(title)}</b><span class="tiny"><span aria-hidden="true">${seen} / ${pool.length}</span><span class="sr-only">${seen} of ${pool.length} seen</span></span>${sub ? `<span class="tiny sub">${esc(sub)}</span>` : ""}${meter(pool)}</a>`;
+  };
   const fillHtml = (s) => Core.parseCloze(s).map((p) => (typeof p === "string" ? esc(p) : `<b>${esc(p.answers[0])}</b>`)).join("");
   const plain = (s) => Core.fillCloze(s);
 
@@ -606,63 +608,77 @@
     const refresh = refreshLessons().slice(0, 4);
     const start = new Date();
     start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 19 * 7);
-    let cells = "";
+    let cells = "", sum = 0, days = 0;
     for (let k = 0; k < 20 * 7; k++) {
       const d = new Date(start);
       d.setDate(start.getDate() + k);
       if (d > new Date()) break;
       const n = S.log[today(d)]?.n || 0;
+      sum += n; days += n > 0;
       cells += `<i data-l="${n === 0 ? 0 : n < 15 ? 1 : n < 40 ? 2 : 3}" title="${today(d)}: ${n} answers"></i>`;
     }
+    const area = (href, name, pool) => `<a class="area" href="${href}"><span>${name}</span><span class="tiny">${pool.filter((it) => S.srs[it.id]).length} / ${pool.length}</span>${meter(pool)}</a>`;
     main.innerHTML = `<div class="page">
-      <div class="page-head"><div><h1>${hello} !</h1><p class="lead" style="margin:0">${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }))}</p></div></div>
-      ${nudgeHtml()}
+      <div class="page-head home-head"><div><h1>${hello} !</h1><p class="lead">${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }))}</p></div></div>
       <div class="home-top">
-        <section class="card pad-lg hero" aria-labelledby="today-h">
-          <span class="label" id="today-h">Today's review</span>
+        <section class="today-card ruled" aria-labelledby="today-h">
+          <h2 class="label" id="today-h" style="margin:0">Today's review</h2>
           ${total ? `<span class="big">${plural(total, "card")}</span>
-            <p>${due ? `${due} to review` : "Nothing due"}${fresh ? ` · ${fresh} new` : ""} · about ${Math.max(3, Math.round(total * 0.35))} min. Verbs, grammar and vocabulary mixed together.</p>
-            <a class="btn lg" href="#/review" id="go">Start review</a>`
-          : `<span class="big">All done</span><p>You've finished today's review. Come back tomorrow, or keep going below.</p>
-            <a class="btn lg" href="#/review?more" id="go">Learn 10 more cards</a>`}
-          <div><div class="goal" role="progressbar" aria-label="Daily goal" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${Math.min(goal, t.n)}"><i style="width:${Math.min(100, (t.n / goal) * 100)}%"></i></div>
-          <p class="small" style="margin-top:6px">Daily goal: ${Math.min(goal, t.n)} / ${goal} answers</p></div>
+            <p>${due ? `${due} to review` : "Nothing due"}${fresh ? `, ${fresh} new` : ""}. About ${Math.max(3, Math.round(total * 0.35))} minutes of verbs, grammar and vocabulary, mixed together.</p>
+            <a class="btn primary lg" href="#/review" id="go">Start review</a>`
+          : `<span class="big">All done</span><p>You've finished today's review. Come back tomorrow, or learn a few more cards now.</p>
+            <a class="btn primary lg" href="#/review?more" id="go">Learn 10 more cards</a>`}
+          <div class="goal-wrap"><div class="goal" role="progressbar" aria-label="Daily goal" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${Math.min(goal, t.n)}"><i style="width:${Math.min(100, (t.n / goal) * 100)}%"></i></div>
+          <p class="tiny" style="margin:6px 0 0">Daily goal: ${Math.min(goal, t.n)} of ${goal} answers</p></div>
         </section>
-        <section class="card" aria-label="Your stats">
-          <div class="stat-row">
-            <div class="stat flame">${icon("flame")}<b>${streak()}</b><span>day streak</span></div>
-            <div class="stat">${icon("check")}<b>${t.n ? Math.round((t.ok / t.n) * 100) + "%" : "–"}</b><span>accuracy today</span></div>
-            <div class="stat">${icon("star")}<b>${ITEMS.filter(mastered).length}</b><span>cards mastered</span></div>
-            <div class="stat">${icon("learn")}<b>${Object.keys(S.lessons).length} / ${LESSONS.length}</b><span>lessons learned</span></div>
+        <section class="card stats" aria-label="Your progress">
+          <div class="streak"><span class="flame">${icon("flame")}</span><div><b>${plural(streak(), "day")}</b><span>in a row</span></div></div>
+          <dl class="stat-list">
+            <div><dt>accuracy today</dt><dd>${t.n ? Math.round((t.ok / t.n) * 100) + "%" : "–"}</dd></div>
+            <div><dt>cards mastered</dt><dd>${ITEMS.filter(mastered).length}</dd></div>
+            <div><dt>lessons learned</dt><dd>${Object.keys(S.lessons).length}<span class="tiny"> / ${LESSONS.length}</span></dd></div>
+          </dl>
+          <div class="areas">
+            ${area("#/practice#verbs", "Verbs", ITEMS.filter((it) => it.type === "conj" && active(it)))}
+            ${area("#/practice#grammar", "Grammar", ITEMS.filter((it) => it.type === "cloze"))}
+            ${area("#/practice#vocab", "Vocabulary", ITEMS.filter((it) => it.type === "vocab"))}
           </div>
-          <p class="tiny" style="margin:18px 0 8px">Last 20 weeks</p><div class="heat" aria-label="Activity calendar">${cells}</div>
         </section>
       </div>
-
-      ${refresh.length ? `<h2>Needs a refresher</h2><p class="muted small">You've missed several cards on these topics recently. Re-read the lesson, then do a short check.</p>
-        <div class="list">${refresh.map(({ l, st }) => `<a class="row-link" href="#/learn/${l.id}"><span class="status-dot refresh">${icon("refresh")}</span><span class="grow"><h3>${esc(l.title)}</h3><span class="tiny">${st.forgot} cards forgotten · ${esc(l.unit)}</span></span><span class="badge orange">Relearn</span>${icon("chev", "i chev")}</a>`).join("")}</div>` : ""}
-
-      ${nl ? `<h2>Continue learning</h2><div class="list"><a class="row-link" href="#/learn/${nl.id}"><span class="status-dot next">${icon("learn")}</span><span class="grow"><h3>${esc(nl.title)}</h3><span class="tiny">${esc(nl.unit)} · ${lessonItems(nl).length} practice cards</span></span><span class="btn primary">Start lesson</span></a></div>` : ""}
-
-      <h2>Practise by area</h2>
-      <div class="grid three">
-        ${tile("#/practice#verbs", "Verbs", ITEMS.filter((it) => it.type === "conj" && active(it)))}
-        ${tile("#/practice#grammar", "Grammar", ITEMS.filter((it) => it.type === "cloze"))}
-        ${tile("#/practice#vocab", "Vocabulary", ITEMS.filter((it) => it.type === "vocab"))}
-      </div></div>`;
+      ${nudgeHtml()}
+      <div class="home-cols">
+        ${nl ? `<section aria-labelledby="next-h"><h2 id="next-h">Up next</h2><a class="card next-card" href="#/learn/${nl.id}"><span class="tiny">Lesson ${LESSONS.indexOf(nl) + 1} of ${LESSONS.length}, ${esc(nl.unit)}</span><h3>${esc(nl.title)}</h3><span class="small muted">Read the rule, hear the examples, then a short check of ${Math.min(10, lessonItems(nl).length)} questions.</span><span class="btn">Open lesson</span></a></section>` : ""}
+        ${refresh.length ? `<section aria-labelledby="refresh-h"><h2 id="refresh-h">Needs a refresher</h2>
+          <div class="list">${refresh.map(({ l, st }) => `<a class="row-link" href="#/learn/${l.id}"><span class="status-dot refresh">${icon("refresh")}</span><span class="grow"><h3>${esc(l.title)}</h3><span class="tiny">${plural(st.forgot, "card")} forgotten</span></span>${icon("chev", "i chev")}</a>`).join("")}</div></section>` : ""}
+      </div>
+      <section class="card heat-card" aria-labelledby="heat-h">
+        <div class="sec-head"><h2 id="heat-h">Last 20 weeks</h2><span class="tiny heat-legend" aria-hidden="true">Less <i></i><i></i><i></i><i></i> More</span></div>
+        <div class="heat-body"><div class="heat" role="img" aria-label="Activity calendar: answers per day over the last 20 weeks">${cells}</div>
+          <dl class="heat-sum"><div><dt>answers</dt><dd>${sum}</dd></div><div><dt>days practised</dt><dd>${days}</dd></div></dl></div>
+      </section></div>`;
     document.getElementById("go")?.focus();
   }
 
   function pageLearn() {
+    const nl = nextLesson(), learned = Object.keys(S.lessons).length;
     main.innerHTML = `<div class="page">
-      <div class="page-head"><div><h1>Learn</h1><p class="lead" style="margin:0">Each lesson explains one topic with examples and audio, then checks you with a few questions. Come back to any lesson when you've forgotten it; topics you keep missing are marked <span class="badge orange">Needs a refresher</span>.</p></div></div>
-      ${UNITS.map((u, ui) => `<h2>${esc(u.title)}</h2><div class="list">${u.lessons.map((l) => {
-        const st = lessonStatus(LESSON[l.id]);
-        const n = LESSONS.indexOf(LESSON[l.id]) + 1;
-        const dot = st.key === "done" ? `<span class="status-dot done">${icon("check")}</span>` : st.key === "refresh" ? `<span class="status-dot refresh">${icon("refresh")}</span>` : `<span class="status-dot">${n}</span>`;
-        const b = st.key === "done" ? `<span class="badge green">Learned</span>` : st.key === "refresh" ? `<span class="badge orange">Needs a refresher</span>` : "";
-        return `<a class="row-link" href="#/learn/${l.id}">${dot}<span class="grow"><h3>${esc(l.title)}</h3><span class="tiny">${lessonItems(LESSON[l.id]).length} practice cards${st.forgot ? ` · ${st.forgot} forgotten` : ""}</span></span>${b}${icon("chev", "i chev")}</a>`;
-      }).join("")}</div>`).join("")}</div>`;
+      <div class="page-head"><div><h1>Learn</h1><p class="lead">Each lesson explains one topic with examples and audio, then checks you with a few questions. Topics you keep missing are marked for a refresher.</p></div>
+        <div class="overall"><span class="tiny">${learned} of ${LESSONS.length} learned</span><div class="meter" role="img" aria-label="${learned} of ${LESSONS.length} lessons learned"><i class="m" style="width:${(learned / LESSONS.length) * 100}%"></i></div></div></div>
+      ${UNITS.map((u) => {
+        const sts = u.lessons.map((l) => lessonStatus(LESSON[l.id]));
+        const done = sts.filter((s) => s.key !== "new").length;
+        // open the unit you're in, and any unit with a lesson to refresh; finished and later units stay folded
+        const open = u.lessons.some((l) => l.id === nl?.id) || sts.some((s) => s.key === "refresh");
+        return `<details class="unit"${open ? " open" : ""}><summary><h2>${esc(u.title)}</h2><span class="tiny">${done} / ${u.lessons.length}</span>
+          <span class="meter" aria-hidden="true"><i class="m" style="width:${(done / u.lessons.length) * 100}%"></i></span>${icon("chev", "i chev")}</summary>
+          <div class="list">${u.lessons.map((l, k) => {
+            const st = sts[k], isNext = l.id === nl?.id;
+            const n = LESSONS.indexOf(LESSON[l.id]) + 1;
+            const dot = st.key === "done" ? `<span class="status-dot done">${icon("check")}</span>` : st.key === "refresh" ? `<span class="status-dot refresh">${icon("refresh")}</span>` : `<span class="status-dot${isNext ? " next" : ""}">${n}</span>`;
+            const b = isNext ? `<span class="badge blue">Up next</span>` : st.key === "done" ? `<span class="badge green">Learned</span>` : st.key === "refresh" ? `<span class="badge orange">Needs a refresher</span>` : "";
+            return `<a class="row-link${isNext ? " next" : ""}" href="#/learn/${l.id}">${dot}<span class="grow"><h3>${esc(l.title)}</h3><span class="tiny">${plural(lessonItems(LESSON[l.id]).length, "practice card")}${st.forgot ? `, ${st.forgot} forgotten` : ""}</span></span>${b}${icon("chev", "i chev")}</a>`;
+          }).join("")}</div></details>`;
+      }).join("")}</div>`;
   }
 
   function pageLesson(id) {
@@ -684,13 +700,13 @@
       const words = DATA.vocab.filter((w) => l.themes.includes(w[2]));
       html += stepH("Study the words") + `<p class="muted small">Listen to each word and say it out loud. Nouns come with their article, so learn the gender at the same time.</p><div class="card"><div class="vocab-list">${words.map(([fr, en]) => `<div class="vocab-item">${sayBtn(fr)}<span class="fr" lang="fr">${esc(fr)}</span><span class="en">${esc(en)}</span></div>`).join("")}</div></div>`;
     }
-    html += stepH("Check yourself") + `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-      <div><h3>Quick check · ${Math.min(10, items.length)} questions</h3><p class="tiny" style="margin:0">Cards you get wrong come back in your daily review until they stick.</p></div>
+    html += stepH("Check yourself") + `<div class="card check-cta">
+      <div><h3>Quick check: ${Math.min(10, items.length)} questions</h3><p class="tiny" style="margin:0">Cards you get wrong come back in your daily review until they stick.</p></div>
       <a class="btn primary lg" href="#/check/${l.id}">${st.key === "new" ? "Start quick check" : "Practise again"}</a></div>`;
     main.innerHTML = `<div class="page">
       <div class="crumbs"><a href="#/learn">Learn</a> › ${esc(l.unit)}</div>
       <div class="page-head"><div><h1>${esc(l.title)}</h1>
-        <p class="lead" style="margin:0">${st.key === "refresh" ? `You've forgotten ${st.forgot} cards from this lesson. Re-read it, then take the quick check.` : st.key === "done" ? "You've learned this. Read it again whenever you need a reminder." : `Lesson ${idx + 1} of ${LESSONS.length}.`}</p></div>
+        <p class="lead">${st.key === "refresh" ? `You've forgotten ${st.forgot} cards from this lesson. Re-read it, then take the quick check.` : st.key === "done" ? "You've learned this. Read it again whenever you need a reminder." : `Lesson ${idx + 1} of ${LESSONS.length}.`}</p></div>
         ${st.key !== "new" ? `<span class="badge ${st.key === "done" ? "green" : "orange"}">${st.label}</span>` : ""}</div>
       ${html}
       ${nxt ? `<p style="margin-top:32px"><a class="btn ghost" href="#/learn/${nxt.id}">Next lesson: ${esc(nxt.title)} ${icon("chev")}</a></p>` : ""}</div>`;
@@ -699,22 +715,19 @@
   function pagePractice() {
     const due = dueItems().length;
     const weak = weakItems();
+    const mode = (href, ic, title, text, badge, cls = "") => `<a class="card mode${cls}" href="${href}"><span class="top"><span class="ico">${icon(ic)}</span>${badge}</span><h3>${title}</h3><span class="tiny">${text}</span></a>`;
+    const section = (id, title, all, allLabel, rows) => `<div class="sec-head"><h2 id="${id}">${title}</h2><a class="btn" href="${all}">${allLabel}</a></div><div class="topics">${rows}</div>`;
     main.innerHTML = `<div class="page">
-      <div class="page-head"><div><h1>Practice</h1><p class="lead" style="margin:0">Your daily review mixes everything automatically. Use these when you want to focus on one area.</p></div></div>
+      <div class="page-head"><div><h1>Practice</h1><p class="lead">Your daily review mixes everything for you. Pick a topic below when you want to focus on one thing.</p></div></div>
       <div class="grid three">
-        <a class="card tile" href="#/review"><div class="top"><h3>Daily review</h3>${due ? `<span class="badge blue">${due} due</span>` : ""}</div><span class="tiny">Spaced repetition across all areas</span></a>
-        <a class="card tile" href="#/dictation"><div class="top"><h3>Dictation</h3>${icon("headphones")}</div><span class="tiny">Listen to a sentence and type it</span></a>
-        <a class="card tile" href="#/drill?k=weak"><div class="top"><h3>Weak spots</h3>${weak.length ? `<span class="badge red">${weak.length}</span>` : ""}</div><span class="tiny">The cards you miss most</span></a>
+        ${mode("#/review", "practice", "Daily review", "Spaced repetition across all areas", due ? `<span class="badge blue">${due} due</span>` : "", " main")}
+        ${mode("#/dictation", "headphones", "Dictation", "Listen to a sentence and type it", "")}
+        ${mode("#/drill?k=weak", "refresh", "Weak spots", "The cards you miss most", weak.length ? `<span class="badge red">${weak.length}</span>` : "")}
       </div>
-      <h2 id="verbs">Verbs by tense</h2>
-      <div class="grid auto">${TENSE_ORDER.filter((t) => S.settings.tenses.includes(t)).map((t) => tile(`#/drill?k=conj&t=${t}`, topicName(TENSES[t]), ITEMS.filter((it) => it.type === "conj" && it.tense === t), TENSE_EN[t].toLowerCase() === TENSES[t] ? "" : `<span class="tiny">${TENSE_EN[t]}</span>`)).join("")}</div>
-      <p style="margin-top:12px"><a class="btn" href="#/drill?k=conj&t=${S.settings.tenses.join(",")}">All tenses mixed</a></p>
-      <h2 id="grammar">Grammar</h2>
-      <div class="grid auto">${GRAMMAR_TOPICS.map((t) => tile(`#/drill?k=topic&g=${encodeURIComponent(t)}`, topicName(t), ITEMS.filter((it) => it.type === "cloze" && it.group === t))).join("")}</div>
-      <p style="margin-top:12px"><a class="btn" href="#/drill?k=type&g=cloze">All grammar mixed</a></p>
-      <h2 id="vocab">Vocabulary</h2>
-      <div class="grid auto">${THEMES.map((t) => tile(`#/drill?k=theme&g=${encodeURIComponent(t)}`, t, ITEMS.filter((it) => it.type === "vocab" && it.group === t))).join("")}</div>
-      <p style="margin-top:12px"><a class="btn" href="#/drill?k=type&g=vocab">All vocabulary mixed</a></p></div>`;
+      <nav class="jump" aria-label="Topics"><a href="#/practice#verbs">Verbs</a><a href="#/practice#grammar">Grammar</a><a href="#/practice#vocab">Vocabulary</a></nav>
+      ${section("verbs", "Verbs by tense", `#/drill?k=conj&t=${S.settings.tenses.join(",")}`, "All tenses mixed", TENSE_ORDER.filter((t) => S.settings.tenses.includes(t)).map((t) => tile(`#/drill?k=conj&t=${t}`, topicName(TENSES[t]), ITEMS.filter((it) => it.type === "conj" && it.tense === t), TENSE_EN[t].toLowerCase() === TENSES[t] ? "" : TENSE_EN[t])).join(""))}
+      ${section("grammar", "Grammar", "#/drill?k=type&g=cloze", "All grammar mixed", GRAMMAR_TOPICS.map((t) => tile(`#/drill?k=topic&g=${encodeURIComponent(t)}`, topicName(t), ITEMS.filter((it) => it.type === "cloze" && it.group === t), "", t === "examen" ? "en" : "fr")).join(""))}
+      ${section("vocab", "Vocabulary", "#/drill?k=type&g=vocab", "All vocabulary mixed", THEMES.map((t) => tile(`#/drill?k=theme&g=${encodeURIComponent(t)}`, t, ITEMS.filter((it) => it.type === "vocab" && it.group === t))).join(""))}</div>`;
   }
 
   // ---------- cheatsheets ----------
@@ -748,11 +761,11 @@
       }).join("");
     }
     main.innerHTML = `<div class="page">
-      <div class="page-head"><div><h1>Cheatsheets</h1><p class="lead" style="margin:0">Everything from your course on one page per area. Search it, or print it.</p></div>
+      <div class="page-head"><div><h1>Cheatsheets</h1><p class="lead">Everything from your course on one page per area. Search it, or print it.</p></div>
         <button class="btn no-print" type="button" data-print>${icon("print")} Print</button></div>
       <nav class="tabs no-print" aria-label="Cheatsheet">${tabs.map(([k, n]) => `<a href="#/cheatsheets/${k}" ${k === tab ? 'aria-current="page"' : ""}>${n}</a>`).join("")}</nav>
-      <p class="no-print"><input type="search" id="find" placeholder="Search ${tab === "verbs" ? "verbs (e.g. prendre, to take)" : tab === "vocab" ? "words in French or English" : "rules (e.g. depuis, qui, au)"}" aria-label="Search this cheatsheet"></p>
-      <p class="tiny" id="found" role="status"></p>
+      <div class="find-row no-print"><input type="search" id="find" placeholder="Search ${tab === "verbs" ? "verbs (e.g. prendre, to take)" : tab === "vocab" ? "words in French or English" : "rules (e.g. depuis, qui, au)"}" aria-label="Search this cheatsheet">
+        <p class="tiny" id="found" role="status"></p></div>
       ${body}</div>`;
     const find = document.getElementById("find");
     // normalise once per tab, not on every keystroke
@@ -804,31 +817,32 @@
 
   function pageSettings() {
     const st = S.settings;
-    main.innerHTML = `<div class="page" style="max-width:720px">
+    main.innerHTML = `<div class="page narrow settings">
       <h1>Settings</h1>
       <h2>Daily review</h2>
       <div class="card">
         <div class="field"><label for="newPerDay">New cards per day<span class="tiny">How many unseen cards join your review each day</span></label><input type="number" id="newPerDay" min="0" max="100" value="${st.newPerDay}" style="width:96px"></div>
         <div class="field"><label for="sessionSize">Cards per session<span class="tiny">Also your daily goal</span></label><input type="number" id="sessionSize" min="5" max="100" value="${st.sessionSize}" style="width:96px"></div>
+        <fieldset class="field col"><legend class="sr-only">Tenses you're studying</legend><span aria-hidden="true">Tenses you're studying<span class="tiny">Verb drills and your review only use these</span></span>
+          <div class="checks">${TENSE_ORDER.map((t) => `<label class="check" lang="fr"><input type="checkbox" data-tense="${t}" ${st.tenses.includes(t) ? "checked" : ""}>${esc(TENSES[t])}</label>`).join("")}</div></fieldset>
+        <div class="field"><span id="theme-l">Theme</span><span class="seg" role="radiogroup" aria-labelledby="theme-l">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<label><input type="radio" name="theme" value="${v}" ${st.theme === v ? "checked" : ""}>${l}</label>`).join("")}</span></div>
       </div>
-      <h2>Tenses you're studying</h2>
-      <div class="card"><div class="checks">${TENSE_ORDER.map((t) => `<label class="check"><input type="checkbox" data-tense="${t}" ${st.tenses.includes(t) ? "checked" : ""}> ${esc(TENSES[t])}</label>`).join("")}</div></div>
       <h2>Audio</h2>
       <div class="card">
         <div class="field"><label for="accent">Main accent<span class="tiny">Used everywhere. The other one is a second button next to answers, examples and dictation.</span></label><select id="accent">${Object.entries(ACCENTS).map(([k, a]) => `<option value="${k}" ${st.accent === k ? "selected" : ""}>${a.name}</option>`).join("")}</select></div>
-        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span style="display:flex;gap:8px"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
+        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span class="voice-pick"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
         <div class="field"><label for="rate">Speed</label><input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="${st.rate}"></div>
         <div class="field"><label for="autoplay">Read the answer aloud after each question</label><input type="checkbox" id="autoplay" ${st.autoplay ? "checked" : ""} style="width:22px;height:22px"></div>
         <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${voiceHelp()}</p>
       </div>
-      <h2>Appearance</h2>
-      <div class="card"><div class="field"><label for="theme">Theme</label><select id="theme">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<option value="${v}" ${st.theme === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
-      <h2 id="sync">Sync across devices</h2>
+      <h2 id="sync">Your progress</h2>
       <div class="card"><div id="sync-card"></div>
-        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0"><button class="btn" type="button" id="export">Export progress</button>
-        <label class="btn" for="import">Import progress</label><input type="file" id="import" accept="application/json" hidden>
-        <button class="btn ghost" type="button" id="reset" style="color:var(--danger)">Erase all progress</button></p>
-        <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div></div>`;
+        <div class="field" style="border-top:1px solid var(--border);border-bottom:0;margin-top:16px;padding:16px 0 0"><span>Backup file<span class="tiny">Save your progress to a file, or load one</span></span>
+          <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="export">Export</button>
+          <label class="btn" for="import">Import</label><input type="file" id="import" accept="application/json" hidden></span></div>
+        <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div>
+      <div class="card danger-zone" style="margin-top:16px"><p><b>Erase all progress</b><span class="tiny" style="display:block">Lessons, review schedule and statistics. Export a backup first if you want to keep them.</span></p>
+        <button class="btn danger" type="button" id="reset">Erase progress</button></div></div>`;
     const set = (k, v) => {
       S.settings[k] = v;
       if (Core.SYNCED.includes(k)) S.setAt[k] = Core.stamp(S);
@@ -847,7 +861,7 @@
     main.querySelectorAll("[data-test]").forEach((b) => (b.onclick = () => speak(b.dataset.test === "qc" ? "Bonjour ! Je m'appelle Léa et je reste à Montréal depuis deux ans." : "Bonjour ! Je m'appelle Léa et j'habite à Paris.", undefined, b.dataset.test)));
     document.getElementById("rate").onchange = (e) => set("rate", +e.target.value);
     document.getElementById("autoplay").onchange = (e) => set("autoplay", e.target.checked);
-    document.getElementById("theme").onchange = (e) => { set("theme", e.target.value); applyTheme(); };
+    main.querySelectorAll('[name="theme"]').forEach((r) => (r.onchange = () => { set("theme", r.value); applyTheme(); }));
     const msg = (t) => (document.getElementById("msg").textContent = t);
     renderSyncCard();
     document.getElementById("export").onclick = () => {
@@ -1130,7 +1144,7 @@
   function applyTheme() {
     if (S.settings.theme === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.dataset.theme = S.settings.theme;
-    const bar = { light: "#f5f5f7", dark: "#000000" };
+    const bar = { light: "#fbfaf7", dark: "#10141d" };
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = bar[S.settings.theme] || bar[m.media.includes("dark") ? "dark" : "light"]; });
   }
 
