@@ -897,6 +897,7 @@
       <h2 id="about">About</h2>
       <div class="card"><p style="margin-top:0"><b lang="fr">Petit à petit français</b> is a free French practice app for A1–A2 learners, with France and Québec voices. Made by Parsa Kamalipour.</p>
         <p class="small">Version ${VERSION} · <a href="${REPO}" target="_blank" rel="noopener">Source code</a> · <a href="privacy.html">Privacy policy</a> · <a href="${REPO}/blob/main/LICENSE" target="_blank" rel="noopener">Licence (GPL-3.0)</a> · <a href="${REPO}/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Third-party notices</a></p>
+        <p class="small">Free and ad-free. If it helps you, you can support it: <a href="https://github.com/sponsors/benymaxparsa" target="_blank" rel="noopener">GitHub Sponsors</a> · <a href="https://buymeacoffee.com/parsakamalipour" target="_blank" rel="noopener">Buy me a coffee</a></p>
         <p class="small" style="margin-bottom:0">Found a mistake or a bug? <a href="${REPO}/issues/new" target="_blank" rel="noopener">Report a problem</a>.</p></div></div>`;
     const set = (k, v) => {
       S.settings[k] = v;

@@ -86,6 +86,10 @@ Third-party components keep their own licences; see [THIRD_PARTY_NOTICES.md](THI
 
 Petit à petit français is an independent project. It is not affiliated with, endorsed by or sponsored by any publisher, school, course or podcast. The example sentences and explanations are written for this app.
 
+## Support
+
+Petit à petit français is free and has no ads. If it helps you, you can support it through [GitHub Sponsors](https://github.com/sponsors/benymaxparsa) or [Buy Me a Coffee](https://buymeacoffee.com/parsakamalipour).
+
 ## Feedback
 
 Found a wrong translation or a bug? [Open an issue](https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/issues/new). The app links here from Settings › About.
