@@ -673,5 +673,6 @@ html:has(body.focus) { scroll-padding-top: 84px; scroll-padding-bottom: 200px; }
 @media (forced-colors: active) {
   .glass, .bar, dialog, .streak-mini { border: 1px solid CanvasText; }
   .edge { display: none; }
+  .glass::after, .bar::after { display: none; }
   .nav a[aria-current="page"], .tabbar a[aria-current="page"] { outline: 2px solid Highlight; }
 }
