@@ -4,6 +4,17 @@ A French practice app for A1–A2 learners: lessons, spaced-repetition review, v
 
 **Use it:** https://petitfrench.parsakp.com/ (the old github.io address forwards there)
 
+## What's inside
+
+- **Course:** units of short lessons that build from greetings to everyday conversations.
+- **Review:** spaced repetition that schedules each sentence, verb and word for when you're about to forget it.
+- **Verb drills** in 8 tenses: présent, passé composé, futur proche, passé récent, impératif, imparfait, futur simple and conditionnel présent.
+- **Dictation and listening** with a France voice and a Québec voice, side by side.
+- **Cheatsheets** for grammar and vocabulary, with search.
+- **Works offline** and installs as an app (PWA). Light and dark themes.
+
+## How it works
+
 It is a static site with no build step and no server. Progress is saved in the browser (Settings › Export progress to back it up). Learners can optionally sign in with Google or Apple to sync it across devices, through their own Google Drive or iCloud. See the [privacy policy](privacy.html).
 
 ## Run locally
@@ -29,7 +40,7 @@ The first checks the conjugation engine, grading, the scheduler, saved-progress 
 |---|---|
 | `core.js` | Conjugation engine, grading, spaced-repetition scheduler |
 | `data.js`, `grammar_extra.js`, `vocab_extra.js` | Verbs, sentences, words, grammar sheets and the course units |
-| `app.js` | The app: routes, lessons, practice sessions, cheatsheets, settings, the sync screens |
+| `app.js` | The app: routes, lessons, practice sessions, cheatsheets, settings (including About and the version number), the sync screens |
 | `sync.js` | Sync engine: pulls each linked cloud, merges, saves, pushes |
 | `sync-config.js` | Public sign-in IDs (Google client ID, CloudKit container and API token, token helper URL) |
 | `sync-google.js`, `sync-apple.js` | Google Drive and iCloud providers, loaded only when someone signs in |
@@ -55,3 +66,7 @@ The learning content (the practice sentences, translations, grammar sheets, voca
 Third-party components keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Petit à petit français is an independent project. It is not affiliated with, endorsed by or sponsored by any publisher, school, course or podcast. The example sentences and explanations are written for this app.
+
+## Feedback
+
+Found a wrong translation or a bug? [Open an issue](https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/issues/new). The app links here from Settings › About.
