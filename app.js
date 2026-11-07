@@ -339,7 +339,7 @@
     s.checked = false;
     const isNew = !S.srs[it.id];
     main.innerHTML = `<div class="session">
-      <div class="session-top"><a class="icon-btn" href="${s.back}" aria-label="End session">${icon("x")}</a>
+      <div class="session-top glass"><a class="icon-btn" href="${s.back}" aria-label="End session">${icon("x")}</a>
         <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="${s.queue.length}" aria-valuenow="${s.i}" aria-label="Session progress"><i style="width:${(s.i / s.queue.length) * 100}%"></i></div>
         <span class="count">${s.i + 1} / ${s.queue.length}</span>
         <a class="icon-btn" href="#/settings" aria-label="Settings (voice and accent)" title="Settings (voice and accent)">${icon("settings")}</a></div>
@@ -502,7 +502,7 @@
       }
       const d = q[i];
       main.innerHTML = `<div class="session">
-        <div class="session-top"><a class="icon-btn" href="#/practice" aria-label="End dictation">${icon("x")}</a><div class="track"><i style="width:${(i / q.length) * 100}%"></i></div><span class="count">${i + 1} / ${q.length}</span></div>
+        <div class="session-top glass"><a class="icon-btn" href="#/practice" aria-label="End dictation">${icon("x")}</a><div class="track"><i style="width:${(i / q.length) * 100}%"></i></div><span class="count">${i + 1} / ${q.length}</span></div>
         <div class="session-body"><div class="sheet ruled"><div class="q-label">Type what you hear</div>
           <p class="dict-play"><button class="btn primary lg" type="button" data-say="${esc(d.text)}">${icon("volume")} Play</button>
           <button class="btn lg" type="button" data-say="${esc(d.text)}" data-rate="0.6">Play slowly</button>
@@ -1182,6 +1182,7 @@
     const section = { learn: "learn", check: "learn", practice: "practice", review: "practice", drill: "practice", dictation: "practice", cheatsheets: "cheatsheets", settings: "settings" }[parts[0]] || "home";
     renderNav(section);
     window.scrollTo(0, 0);
+    document.getElementById("tabbar").classList.remove("min");
     main.focus({ preventScroll: true });
     switch (parts[0]) {
       case undefined: return pageHome();
@@ -1219,6 +1220,15 @@
     }
   }
   window.addEventListener("hashchange", route);
+  // the phone tab bar minimises while you scroll down and comes back when you scroll up (iOS 26 behaviour)
+  let lastY = scrollY;
+  const tabbar = document.getElementById("tabbar");
+  window.addEventListener("scroll", () => {
+    const y = scrollY, dy = y - lastY;
+    if (Math.abs(dy) < 8) return; // ignore jitter and tiny scrolls
+    tabbar.classList.toggle("min", dy > 0 && y > 120);
+    lastY = y;
+  }, { passive: true });
   applyTheme();
   route();
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
