@@ -4,6 +4,10 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Natural France and Québec voices (Azure Denise and Sylvie) in every browser, including Safari, iPhone, Firefox and Linux. Each phrase is made once and cached; the device voice is the fallback, and device voices can still be picked in Settings (#42).
+
 ## [1.0.0] - 2026-11-07
 
 First tagged release.
