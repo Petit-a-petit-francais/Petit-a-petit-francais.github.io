@@ -10,7 +10,7 @@ First tagged release.
 
 ### Added
 
-- Course units with lessons, spaced-repetition review, verb drills in 8 tenses, dictation and searchable cheatsheets, with France and Québec voices (#1).
+- Course units with lessons, spaced-repetition review, verb drills in 8 tenses, dictation and searchable cheatsheets, with France and Québec voices.
 - Optional sync of progress through the learner's own Google Drive or iCloud (#23), with one-tap sign-in in a compact window (#37).
 - Session 16 content: wishes with the conditionnel (#21).
 - Cahier redesign with a new visual identity (#29) and a Liquid Glass navigation layer (#31).
