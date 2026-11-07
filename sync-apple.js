@@ -20,10 +20,29 @@
     if (!c || TRANSIENT.includes(c)) return fail("offline", c || (e && e.message) || "network error");
     return fail("other", c);
   }
+  // CloudKit web tokens are single-use: every reply carries a new one and the old one stops working. Two requests sent
+  // with the same token (from two tabs, or two calls at once) leave a dead token stored, and the learner is signed out.
+  // So CloudKit calls run one at a time across all tabs (Web Locks), or at least within this tab.
+  let chain = Promise.resolve();
+  // shortcut: a request that hangs gives up after 45 s (and lets the other tabs go on); if it then lands late, its token
+  // may be lost and the learner reconnects once. Upgrade if CloudKit JS ever exposes request cancellation.
+  const timed = (fn) => () => {
+    let t;
+    const late = new Promise((_, no) => { t = setTimeout(() => no(fail("offline", "iCloud didn't answer")), 45000); });
+    return Promise.race([Promise.resolve().then(fn), late]).finally(() => clearTimeout(t));
+  };
+  const serial = (f) => {
+    const fn = timed(f);
+    const locks = root.navigator && root.navigator.locks;
+    if (locks) return locks.request("petitfrench-cloudkit", fn);
+    const r = chain.then(fn, fn);
+    chain = r.catch(() => {});
+    return r;
+  };
   // run a CloudKit call; returns the records, treating NOT_FOUND as "not there"
   async function ck(fn) {
     let res;
-    try { res = await fn(); } catch (e) {
+    try { res = await serial(fn); } catch (e) {
       if (e && e.ckErrorCode === "NOT_FOUND") return [];
       throw mapError(e);
     }
@@ -105,9 +124,11 @@
   // Apple's own button (rendered into #apple-sign-in-button) opens the sign-in window; this resolves once it's done.
   async function signIn() {
     await load();
+    // signing in (or reconnecting) starts a new session: a stored token that expired or was used twice would only make
+    // setUpAuth fail instead of showing Apple's sign-in button
     const c = container();
     let user;
-    try { user = await c.setUpAuth(); } catch (e) { throw mapError(e); }
+    try { user = await serial(() => (ls.del(KEY), c.setUpAuth())); } catch (e) { throw mapError(e); }
     if (!user) user = await c.whenUserSignsIn();
     return provider(c);
   }
@@ -116,7 +137,7 @@
     await load();
     const c = container();
     let user = null;
-    try { user = await c.setUpAuth(); } catch (e) { throw mapError(e); }
+    try { user = await serial(() => c.setUpAuth()); } catch (e) { throw mapError(e); }
     return user ? provider(c) : null;
   }
 

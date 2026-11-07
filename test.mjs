@@ -410,6 +410,10 @@ if (existsSync(here("sync.js"))) vm.runInContext(readFileSync(here("sync.js"), "
     p.pull = async () => { throw Object.assign(new Error("expired"), { code: "auth" }); };
     await e.sync.run();
     assert.equal(e.status.google, "reconnect");
+    // a cloud that keeps refusing a save is not "offline": show the real error so it isn't hidden forever
+    p.pull = async () => { throw Object.assign(new Error("BAD_REQUEST"), { code: "other" }); };
+    await e.sync.run();
+    assert.equal(e.status.google, "other");
   }
 }
 console.log("ok — sync engine");
@@ -533,7 +537,7 @@ console.log("ok — google provider");
 {
   const recs = {}, assets = {}, store = {};
   let tag = 1, failNext = null, signedIn = false, signOuts = 0;
-  const g = { console, setTimeout, Promise, Blob, TextEncoder, JSON,
+  const g = { console, setTimeout, clearTimeout, Promise, Blob, TextEncoder, JSON,
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = String(v)), removeItem: (k) => delete store[k] } };
   g.window = g;
   g.fetch = async (url) => { if (!assets[url]) throw new TypeError("Failed to fetch"); return { ok: true, status: 200, text: async () => assets[url] }; };
@@ -553,7 +557,9 @@ console.log("ok — google provider");
     },
     async deleteRecords(names) { trip(); names.forEach((n) => delete recs[n]); return out([]); },
   };
-  const container = { privateCloudDatabase: db, setUpAuth: async () => (signedIn ? { userRecordName: "_u" } : null), whenUserSignsIn: async () => ((signedIn = true), { userRecordName: "_u" }), signOut: () => signOuts++ };
+  // CloudKit tokens are single-use: a dead one in the store makes setUpAuth fail outright
+  // whenUserSignsIn: Apple's popup stores the new session token through our token store
+  const container = { privateCloudDatabase: db, setUpAuth: async () => { if (store["cahier-fr-ck"] === "dead") throw { ckErrorCode: "AUTHENTICATION_FAILED" }; return signedIn ? { userRecordName: "_u" } : null; }, whenUserSignsIn: async () => ((signedIn = true), (store["cahier-fr-ck"] = "fresh"), { userRecordName: "_u" }), signOut: () => signOuts++ };
   g.CloudKit = { configure: (c) => (g.ckConfig = c), getDefaultContainer: () => container };
   vm.createContext(g);
   for (const f of ["sync-config.js", "sync-apple.js"]) if (existsSync(here(f))) vm.runInContext(readFileSync(here(f), "utf8"), g);
@@ -603,6 +609,18 @@ console.log("ok — google provider");
   assert.equal(await code(() => p.pull()), "offline");
   failNext = { ckErrorCode: "THROTTLED" };
   assert.equal(await code(() => p.pull()), "offline");
+  // two calls at once never share a token: CloudKit requests run one at a time
+  let inFlight = 0, most = 0;
+  const realFetch = db.fetchRecords;
+  db.fetchRecords = async (n) => { inFlight++; most = Math.max(most, inFlight); await new Promise((r) => setTimeout(r, 5)); try { return await realFetch(n); } finally { inFlight--; } };
+  await Promise.all([p.pull(), p.pull(), p.push('{"q":1}', [(await p.pull()).copies[0]?.ref])].map((x) => x.catch(() => {})));
+  assert.equal(most, 1, "CloudKit calls overlapped");
+  db.fetchRecords = realFetch;
+  // reconnect after the stored token died (expired, or used twice): clear it so Apple shows its sign-in button
+  store["cahier-fr-ck"] = "dead"; signedIn = false;
+  assert.equal(await code(() => SA.restore()), "auth", "a dead token means reconnect");
+  const again = await SA.signIn();
+  assert.equal(again.id, "apple", "reconnect works with a dead token stored");
   // remove and sign out
   await p.removeAll();
   assert.equal(Object.keys(recs).length, 0);

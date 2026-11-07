@@ -1074,7 +1074,7 @@
       : "Progress is saved in this browser only. Sign in to keep it on all your devices, stored in your own Google Drive or iCloud. Or export a backup now and then."} <a href="privacy.html">Privacy policy</a></p>
       ${linked.map(acct).join("")}
       ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
-      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
+      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in, and tick <b>Keep me signed in</b>: otherwise Apple ends the session after 30 minutes. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
     if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
     else {
       appleBox = document.getElementById("apple-sign-in-button");
@@ -1113,7 +1113,7 @@
         const p = await (await providerModule(id)).restore();
         if (p) await linkAccount(p, false);
         else setSyncStatus(id, "reconnect");
-      } catch (err) { setSyncStatus(id, err && err.code === "auth" ? "reconnect" : "offline", err && err.message); }
+      } catch (err) { setSyncStatus(id, ({ auth: "reconnect", other: "other" })[err && err.code] || "offline", err && err.message); }
     }
   }
   document.addEventListener("DOMContentLoaded", syncBoot);
