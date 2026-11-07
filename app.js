@@ -195,9 +195,52 @@
   };
   const voicesFor = (acc) => voices.filter((v) => vLang(v) === ACCENTS[acc].lang.toLowerCase());
   const voiceFor = (acc) => voices.find((x) => x.voiceURI === S.settings[ACCENTS[acc].key]) || voicesFor(acc)[0] || (acc === "fr" ? voices[0] : null);
-  function speak(text, rate = S.settings.rate, acc = S.settings.accent) {
-    if (!("speechSynthesis" in window) || !text) return;
-    speechSynthesis.cancel();
+  // natural online voice (Azure via our Worker) when the voice setting is "", else / on any failure the device voice
+  const VOICE_URL = "https://petitfrench-voice.token-helper.workers.dev/tts";
+  const NATURAL = { fr: "Denise", qc: "Sylvie" };
+  const player = new Audio();
+  let speakId = 0, onlineOffUntil = 0;
+  // Safari only lets audio start from a tap; playing silence on the first tap unlocks the shared player for later plays
+  const unlock = () => { player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; player.play().catch(() => {}); };
+  addEventListener("pointerdown", unlock, { once: true, capture: true });
+  addEventListener("keydown", unlock, { once: true, capture: true });
+  function stopSpeech() {
+    speakId++;
+    player.pause();
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+  }
+  async function clip(url) {
+    const box = await globalThis.caches?.open("voice-v1").catch(() => null);
+    const hit = await box?.match(url);
+    if (hit) return hit.blob();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    box?.put(url, res.clone()).catch(() => {});
+    return res.blob();
+  }
+  async function speak(text, rate = S.settings.rate, acc = S.settings.accent) {
+    if (!text) return;
+    stopSpeech();
+    const id = speakId;
+    if (!S.settings[ACCENTS[acc].key] && Date.now() > onlineOffUntil) {
+      try {
+        const blob = await clip(`${VOICE_URL}?a=${acc}&t=${encodeURIComponent(text)}`);
+        if (id !== speakId) return; // a newer speak() or a page change won
+        URL.revokeObjectURL(player.src);
+        player.src = URL.createObjectURL(blob);
+        player.defaultPlaybackRate = player.playbackRate = rate; // loading a new src resets playbackRate to the default
+        await player.play();
+        return;
+      } catch (e) {
+        if (id !== speakId) return;
+        // offline, out of free quota or rate-limited: use the device voice for a minute before trying again
+        if (e.name !== "NotAllowedError") onlineOffUntil = Date.now() + 60e3;
+      }
+    }
+    deviceSpeak(text, rate, acc);
+  }
+  function deviceSpeak(text, rate, acc) {
+    if (!("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = ACCENTS[acc].lang;
     u.rate = rate;
@@ -833,10 +876,10 @@
       <h2>Audio</h2>
       <div class="card">
         <div class="field"><label for="accent">Main accent<span class="tiny">Used everywhere. The other one is a second button next to answers, examples and dictation.</span></label><select id="accent">${Object.entries(ACCENTS).map(([k, a]) => `<option value="${k}" ${st.accent === k ? "selected" : ""}>${a.name}</option>`).join("")}</select></div>
-        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span class="voice-pick"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
+        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span class="voice-pick"><select id="${a.key}"><option value="">Natural voice (${NATURAL[k]}, online)</option><option value="device" ${st[a.key] === "device" ? "selected" : ""}>Best on this device${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
         <div class="field"><label for="rate">Speed</label><input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="${st.rate}"></div>
         <div class="field"><label for="autoplay">Read the answer aloud after each question</label><input type="checkbox" id="autoplay" ${st.autoplay ? "checked" : ""} style="width:22px;height:22px"></div>
-        <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${voiceHelp()}</p>
+        <p class="tiny" style="margin:8px 0 0">The natural voices play online and are saved on this device as you go; without a connection the device voice is used. ${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${voiceHelp()}</p>
       </div>
       <h2 id="sync">Your progress</h2>
       <div class="card"><div id="sync-card"></div>
@@ -1222,7 +1265,7 @@
     CSS.highlights?.delete("find");
     if (dialog.open) dialog.close();
     document.body.classList.remove("focus");
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    stopSpeech();
     const [path, qs] = location.hash.slice(1).split("?");
     const params = new URLSearchParams(qs || "");
     const parts = (path || "/").split("#")[0].split("/").filter(Boolean);

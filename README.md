@@ -35,9 +35,10 @@ python3 -m http.server 8000
 ```sh
 node test.mjs
 node token-helper/test.mjs
+node voice/test.mjs
 ```
 
-The first checks the conjugation engine, grading, the scheduler, saved-progress merging, the sync engine, and that every sentence, verb, word and lesson in the data is valid. The second checks the Google token helper.
+The first checks the conjugation engine, grading, the scheduler, saved-progress merging, the sync engine, and that every sentence, verb, word and lesson in the data is valid. The second checks the Google token helper, the third the voice helper.
 
 ## Files
 
@@ -50,6 +51,15 @@ The first checks the conjugation engine, grading, the scheduler, saved-progress 
 | `sync-config.js` | Public sign-in IDs (Google client ID, CloudKit container and API token, token helper URL) |
 | `sync-google.js`, `sync-apple.js` | Google Drive and iCloud providers, loaded only when someone signs in |
 | `token-helper/` | A small Cloudflare Worker that holds the Google client secret and swaps sign-in codes for tokens |
+| `voice/` | A small Cloudflare Worker that holds the Azure Speech key, turns phrases into natural-voice MP3s and caches each one in Workers KV |
+
+## Voice setup
+
+The natural voices must never cost anything, so every piece stays on a free tier that refuses requests past its limit instead of billing. When a limit is hit, the app uses the device voice.
+
+1. **Azure:** one Speech resource on the **Free (F0)** pricing tier (never Standard S0). Put its region in `voice/wrangler.toml`.
+2. **Cloudflare:** the account stays on **Workers Free**. Use Workers KV for the clips, never R2.
+3. **Deploy:** `cd voice && npx wrangler kv namespace create CLIPS`, put the id in `wrangler.toml`, then `npx wrangler deploy` and `npx wrangler secret put AZURE_SPEECH_KEY`. The key is never committed. The Worker's URL is in `app.js` (`VOICE_URL`) and in the `connect-src` of the security rule in `index.html`.
 
 ## Cloud sync setup
 

@@ -18,3 +18,4 @@ jobs:
           node-version: 22
       - run: node test.mjs
       - run: node token-helper/test.mjs
+      - run: node voice/test.mjs
