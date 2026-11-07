@@ -6,6 +6,8 @@
   const TENSE_ORDER = ["pres", "pc", "fp", "pr", "impe", "imp", "fut", "cond"];
   const TENSE_EN = { pres: "Present", pc: "Passé composé", fp: "Near future", pr: "Recent past", impe: "Imperative", imp: "Imparfait", fut: "Future", cond: "Conditional" };
   const KEY = "cahier-fr-v2", V1 = "cahier-fr-v1", V1_MERGED = "cahier-fr-v1-merged", V1_RETIRED = "cahier-fr-v1-retired", BACKUP = "cahier-fr-backup";
+  const VERSION = "1.0.0"; // bump with each release tag
+  const REPO = "https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io";
   const DEFAULTS = { newPerDay: 15, sessionSize: 20, voice: "", voiceQc: "", accent: "fr", rate: 0.9, autoplay: true, tenses: TENSE_ORDER, theme: "auto" };
 
   // ---------- storage ----------
@@ -843,7 +845,11 @@
           <label class="btn" for="import">Import</label><input type="file" id="import" accept="application/json" hidden></span></div>
         <p id="msg" class="small" role="status" style="margin:10px 0 0"></p></div>
       <div class="card danger-zone" style="margin-top:16px"><p><b>Erase all progress</b><span class="tiny" style="display:block">Lessons, review schedule and statistics. Export a backup first if you want to keep them.</span></p>
-        <button class="btn danger" type="button" id="reset">Erase progress</button></div></div>`;
+        <button class="btn danger" type="button" id="reset">Erase progress</button></div>
+      <h2 id="about">About</h2>
+      <div class="card"><p style="margin-top:0"><b lang="fr">Petit à petit français</b> is a free French practice app for A1–A2 learners, with France and Québec voices. Made by Parsa Kamalipour.</p>
+        <p class="small">Version ${VERSION} · <a href="${REPO}">Source code</a> · <a href="privacy.html">Privacy policy</a> · <a href="${REPO}/blob/main/LICENSE">Licence (GPL-3.0)</a> · <a href="${REPO}/blob/main/THIRD_PARTY_NOTICES.md">Third-party notices</a></p>
+        <p class="small" style="margin-bottom:0">Found a mistake or a bug? <a href="${REPO}/issues/new">Report a problem</a>.</p></div></div>`;
     const set = (k, v) => {
       S.settings[k] = v;
       if (Core.SYNCED.includes(k)) S.setAt[k] = Core.stamp(S);
