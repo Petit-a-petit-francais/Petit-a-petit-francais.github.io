@@ -1008,6 +1008,7 @@
       : id === "apple" ? "Apple sign-in didn't work in this browser. Try Google instead."
       : `Sign-in didn't work${e && e.message ? `: ${e.message}` : ""}.`);
     renderSyncCard();
+    document.querySelector(`[data-signin="${id}"]`)?.focus({ preventScroll: true }); // the tapped button was re-drawn: keep keyboard focus on it
   }
   // Sign-in windows. Browsers allow a pop-up only straight from a tap, but Google's and Apple's scripts (and Apple's
   // sign-in address) arrive later. So the tap opens a compact window at once, and when the provider calls window.open()
