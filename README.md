@@ -2,7 +2,7 @@
 
 A French practice app for A1–A2 learners: lessons, spaced-repetition review, verb drills in 8 tenses, dictation and cheatsheets, with France and Québec voices.
 
-**Use it:** https://petit-a-petit-francais.github.io/
+**Use it:** https://petitfrench.parsakp.com/ (the old github.io address forwards there)
 
 It is a static site with no build step and no server. Progress is saved in the browser (Settings › Export progress to back it up). Learners can optionally sign in with Google or Apple to sync it across devices, through their own Google Drive or iCloud. See the [privacy policy](privacy.html).
 
