@@ -29,7 +29,7 @@
   const timed = (fn) => () => {
     let t;
     const late = new Promise((_, no) => { t = setTimeout(() => no(fail("offline", "iCloud didn't answer")), 45000); });
-    return Promise.race([fn(), late]).finally(() => clearTimeout(t));
+    return Promise.race([Promise.resolve().then(fn), late]).finally(() => clearTimeout(t));
   };
   const serial = (f) => {
     const fn = timed(f);
