@@ -1113,7 +1113,7 @@
         const p = await (await providerModule(id)).restore();
         if (p) await linkAccount(p, false);
         else setSyncStatus(id, "reconnect");
-      } catch (err) { setSyncStatus(id, err && err.code === "auth" ? "reconnect" : "offline", err && err.message); }
+      } catch (err) { setSyncStatus(id, ({ auth: "reconnect", other: "other" })[err && err.code] || "offline", err && err.message); }
     }
   }
   document.addEventListener("DOMContentLoaded", syncBoot);

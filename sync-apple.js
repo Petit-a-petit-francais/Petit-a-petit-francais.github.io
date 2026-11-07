@@ -24,7 +24,15 @@
   // with the same token (from two tabs, or two calls at once) leave a dead token stored, and the learner is signed out.
   // So CloudKit calls run one at a time across all tabs (Web Locks), or at least within this tab.
   let chain = Promise.resolve();
-  const serial = (fn) => {
+  // shortcut: a request that hangs gives up after 45 s (and lets the other tabs go on); if it then lands late, its token
+  // may be lost and the learner reconnects once. Upgrade if CloudKit JS ever exposes request cancellation.
+  const timed = (fn) => () => {
+    let t;
+    const late = new Promise((_, no) => { t = setTimeout(() => no(fail("offline", "iCloud didn't answer")), 45000); });
+    return Promise.race([fn(), late]).finally(() => clearTimeout(t));
+  };
+  const serial = (f) => {
+    const fn = timed(f);
     const locks = root.navigator && root.navigator.locks;
     if (locks) return locks.request("petitfrench-cloudkit", fn);
     const r = chain.then(fn, fn);
@@ -118,10 +126,9 @@
     await load();
     // signing in (or reconnecting) starts a new session: a stored token that expired or was used twice would only make
     // setUpAuth fail instead of showing Apple's sign-in button
-    ls.del(KEY);
     const c = container();
     let user;
-    try { user = await serial(() => c.setUpAuth()); } catch (e) { throw mapError(e); }
+    try { user = await serial(() => (ls.del(KEY), c.setUpAuth())); } catch (e) { throw mapError(e); }
     if (!user) user = await c.whenUserSignsIn();
     return provider(c);
   }

@@ -537,7 +537,7 @@ console.log("ok — google provider");
 {
   const recs = {}, assets = {}, store = {};
   let tag = 1, failNext = null, signedIn = false, signOuts = 0;
-  const g = { console, setTimeout, Promise, Blob, TextEncoder, JSON,
+  const g = { console, setTimeout, clearTimeout, Promise, Blob, TextEncoder, JSON,
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = String(v)), removeItem: (k) => delete store[k] } };
   g.window = g;
   g.fetch = async (url) => { if (!assets[url]) throw new TypeError("Failed to fetch"); return { ok: true, status: 200, text: async () => assets[url] }; };
