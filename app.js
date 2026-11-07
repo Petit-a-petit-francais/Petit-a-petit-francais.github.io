@@ -725,7 +725,7 @@
           <div class="list">${u.lessons.map((l, k) => {
             const st = sts[k], isNext = l.id === nl?.id;
             const n = LESSONS.indexOf(LESSON[l.id]) + 1;
-            const dot = st.key === "done" ? `<span class="status-dot done">${icon("check")}</span>` : st.key === "refresh" ? `<span class="status-dot refresh">${icon("refresh")}</span>` : `<span class="status-dot${isNext ? " next" : ""}">${n}</span>`;
+            const dot = st.key === "done" ? `<span class="status-dot learned">${icon("check")}</span>` : st.key === "refresh" ? `<span class="status-dot refresh">${icon("refresh")}</span>` : `<span class="status-dot${isNext ? " next" : ""}">${n}</span>`;
             const b = isNext ? `<span class="badge blue">Up next</span>` : st.key === "done" ? `<span class="badge green">Learned</span>` : st.key === "refresh" ? `<span class="badge orange">Needs a refresher</span>` : "";
             return `<a class="row-link${isNext ? " next" : ""}" href="#/learn/${l.id}">${dot}<span class="grow"><h3>${esc(l.title)}</h3><span class="tiny">${plural(lessonItems(LESSON[l.id]).length, "practice card")}${st.forgot ? `, ${st.forgot} forgotten` : ""}</span></span>${b}${icon("chev", "i chev")}</a>`;
           }).join("")}</div></details>`;

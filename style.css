@@ -272,7 +272,7 @@ fieldset.field { margin: 0; border-width: 0 0 1px; padding-inline: 0; min-width:
 .chev { color: var(--text-3); }
 .status-dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; border: 1.5px solid var(--border); color: var(--text-3); font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 .status-dot .i { width: 18px; height: 18px; }
-.status-dot.done { background: var(--success-soft); border-color: transparent; color: var(--success); }
+.status-dot.learned { background: var(--success-soft); border-color: transparent; color: var(--success); }
 .status-dot.refresh { background: var(--warning-soft); border-color: transparent; color: var(--warning); }
 .status-dot.next { background: var(--primary-fill); border-color: transparent; color: var(--on-primary); }
 .row-link.next { background: var(--primary-soft); }
