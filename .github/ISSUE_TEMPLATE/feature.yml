@@ -1,0 +1,11 @@
+name: Idea
+description: Suggest a feature or a topic to cover.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like, and what would it help you do?
+    validations:
+      required: true

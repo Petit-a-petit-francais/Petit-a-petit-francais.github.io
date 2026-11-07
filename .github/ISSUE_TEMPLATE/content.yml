@@ -1,0 +1,23 @@
+name: Content mistake
+description: A wrong translation, conjugation, accent, explanation or pronunciation.
+labels: [content]
+body:
+  - type: textarea
+    id: text
+    attributes:
+      label: The text as it appears
+      description: Copy the sentence, word or explanation.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: What it should be
+      description: Your correction, and why if it's not obvious (a rule, a dictionary, France vs Québec usage).
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where you saw it
+      placeholder: e.g. Unit 3, lesson 2 / Cheatsheets › Passé composé
