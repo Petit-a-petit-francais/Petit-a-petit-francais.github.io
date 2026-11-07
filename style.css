@@ -160,8 +160,8 @@ main { min-width: 0; padding: 40px clamp(16px, 4vw, 48px) 96px; outline: none; }
   }
   .tabbar a span { transition: opacity .2s, font-size .25s; }
   .tabbar a[aria-current="page"] { color: var(--primary); background: var(--glass-pill); box-shadow: var(--glass-rim), var(--pill-shadow); }
-  .tabbar.min { height: 48px; transform: translateY(4px); }
-  .tabbar.min a span { opacity: 0; font-size: 0; }
+  .tabbar.min:not(:focus-within) { height: 48px; transform: translateY(4px); }
+  .tabbar.min:not(:focus-within) a span { opacity: 0; font-size: 0; }
 }
 @media (max-width: 1000px) { .streak-mini .today { display: none; } }
 @media (max-width: 359px) { .logo span { display: none; } }
@@ -478,9 +478,9 @@ fieldset.field { margin: 0; border-width: 0 0 1px; padding-inline: 0; min-width:
 .bar.ok { --glass: color-mix(in srgb, var(--success-soft) 88%, transparent); }
 .bar.almost { --glass: color-mix(in srgb, var(--warning-soft) 88%, transparent); }
 .bar.bad { --glass: color-mix(in srgb, var(--danger-soft) 88%, transparent); }
-.bar.ok .btn.primary { background: var(--success); border-color: var(--success); color: var(--bg); }
-.bar.almost .btn.primary { background: var(--warning); border-color: var(--warning); color: var(--bg); }
-.bar.bad .btn.primary { background: var(--danger); border-color: var(--danger); color: var(--bg); }
+.bar.ok .btn.primary { background: var(--success); border-color: var(--success); color: var(--bg); box-shadow: var(--glass-rim); }
+.bar.almost .btn.primary { background: var(--warning); border-color: var(--warning); color: var(--bg); box-shadow: var(--glass-rim); }
+.bar.bad .btn.primary { background: var(--danger); border-color: var(--danger); color: var(--bg); box-shadow: var(--glass-rim); }
 .verdict { display: flex; gap: 14px; flex: 1 1 420px; min-width: 0; }
 .verdict .badge-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--surface); }
 .bar.ok .badge-ico { color: var(--success); }
@@ -529,7 +529,7 @@ dialog {
   border-radius: 28px; color: var(--text);
 }
 dialog::backdrop { background: rgba(16, 20, 29, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px 14px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; background: color-mix(in srgb, var(--surface) 94%, transparent); }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px 14px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; background: var(--surface); }
 .dialog-head h2 { margin: 0; font: 600 20px/1.25 var(--serif); }
 .dialog-body { padding: 20px 24px 24px; overflow-y: auto; }
 
@@ -537,7 +537,7 @@ dialog::backdrop { background: rgba(16, 20, 29, .45); -webkit-backdrop-filter: b
 .empty .lead { margin: 0 auto 20px; }
 
 @media print {
-  .sidebar, .tabbar, .no-print, .toc, .tabs, .say { display: none !important; }
+  .sidebar, .tabbar, .edge, .no-print, .toc, .tabs, .say { display: none !important; }
   .shell { display: block; }
   main { padding: 0; }
   body { background: #fff; color: #000; font-size: 12px; }
@@ -573,7 +573,7 @@ dialog::backdrop { background: rgba(16, 20, 29, .45); -webkit-backdrop-filter: b
 }
 
 /* WCAG 2.4.11: keep focused controls clear of the fixed bars */
-@media (max-width: 860px) { html { scroll-padding-top: 76px; scroll-padding-bottom: 96px; } }
+@media (max-width: 860px) { html { scroll-padding-top: 76px; scroll-padding-bottom: calc(80px + max(12px, env(safe-area-inset-bottom))); } }
 html:has(body.focus) { scroll-padding-top: 84px; scroll-padding-bottom: 200px; }
 @media (max-width: 640px) { html:has(body.focus) { scroll-padding-bottom: 50vh; } }
 
@@ -644,6 +644,7 @@ html:has(body.focus) { scroll-padding-top: 84px; scroll-padding-bottom: 200px; }
    and when the browser can't blur what's behind */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass, .bar, dialog { --glass: var(--surface); }
+  .bar.ok { --glass: var(--success-soft); } .bar.almost { --glass: var(--warning-soft); } .bar.bad { --glass: var(--danger-soft); }
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass, .bar, dialog { --glass: var(--surface); --glass-sheen: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -658,5 +659,6 @@ html:has(body.focus) { scroll-padding-top: 84px; scroll-padding-bottom: 200px; }
 }
 @media (forced-colors: active) {
   .glass, .bar, dialog, .streak-mini { border: 1px solid CanvasText; }
+  .edge { display: none; }
   .nav a[aria-current="page"], .tabbar a[aria-current="page"] { outline: 2px solid Highlight; }
 }

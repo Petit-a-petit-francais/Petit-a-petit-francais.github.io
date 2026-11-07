@@ -95,6 +95,7 @@
   const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const main = document.getElementById("main");
+  const tabbar = document.getElementById("tabbar");
   const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
   // ---------- icons (Lucide-style strokes) ----------
@@ -1155,7 +1156,7 @@
     const cur = renderNav.cur, due = dueItems().length;
     const link = (k, h, t, ic, short) => `<a href="${h}" ${k === cur ? 'aria-current="page"' : ""}>${icon(ic)}<span>${short ? t.replace("Cheatsheets", "Sheets") : t}</span>${!short && k === "practice" && due ? `<span class="badge blue">${due}</span>` : ""}</a>`;
     document.getElementById("nav").innerHTML = NAV.map((n) => link(...n)).join("");
-    document.getElementById("tabbar").innerHTML = NAV.map((n) => link(...n, true)).join("");
+    tabbar.innerHTML = NAV.map((n) => link(...n, true)).join("");
     const sync = syncLinked().length ? overall() : "";
     document.getElementById("sidebar-foot").innerHTML = (sync ? `<a class="sync-ind" href="#/settings#sync" data-state="${{ Synced: "ok", "Syncing…": "busy", Offline: "off" }[sync] || "warn"}" aria-label="${sync}" title="${sync}">${icon("cloud")}</a>` : "") + `<div class="streak-mini">${icon("flame")}<span><b>${streak()}</b><span class="streak-word"> day streak</span></span><span class="today">· ${plural(S.log[today()]?.n || 0, "answer")} today</span></div>`;
   }
@@ -1182,7 +1183,7 @@
     const section = { learn: "learn", check: "learn", practice: "practice", review: "practice", drill: "practice", dictation: "practice", cheatsheets: "cheatsheets", settings: "settings" }[parts[0]] || "home";
     renderNav(section);
     window.scrollTo(0, 0);
-    document.getElementById("tabbar").classList.remove("min");
+    tabbar.classList.remove("min");
     main.focus({ preventScroll: true });
     switch (parts[0]) {
       case undefined: return pageHome();
@@ -1222,10 +1223,9 @@
   window.addEventListener("hashchange", route);
   // the phone tab bar minimises while you scroll down and comes back when you scroll up (iOS 26 behaviour)
   let lastY = scrollY;
-  const tabbar = document.getElementById("tabbar");
   window.addEventListener("scroll", () => {
     const y = scrollY, dy = y - lastY;
-    if (Math.abs(dy) < 8) return; // ignore jitter and tiny scrolls
+    if (Math.abs(dy) < 8 || session) return; // ignore jitter and tiny scrolls; no tab bar in a session
     tabbar.classList.toggle("min", dy > 0 && y > 120);
     lastY = y;
   }, { passive: true });
