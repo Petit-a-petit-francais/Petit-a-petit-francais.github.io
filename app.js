@@ -1031,7 +1031,7 @@
   }
   // the learner closed the window without signing in: reset the button. The window also closes itself after a
   // successful sign-in, a moment before the sign-in finishes here, so wait a little before calling it cancelled.
-  function watchClosed(win, done, onClose, grace = 8000) {
+  function watchClosed(win, done, onClose, grace = 4000) {
     if (!win) return;
     const t = setInterval(() => {
       if (done()) return clearInterval(t);
