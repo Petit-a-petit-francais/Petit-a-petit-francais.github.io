@@ -1,0 +1,24 @@
+# Voice helper: Azure neural voices for read-aloud. Deploy by hand: see README ("Voice setup").
+# The Azure key is never in this repo: `npx wrangler secret put AZURE_SPEECH_KEY`.
+# Stays free: keep the Azure Speech resource on the Free (F0) tier and the Cloudflare account on Workers Free. Don't bind R2 (it bills past its free tier).
+name = "petitfrench-voice"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+AZURE_REGION = "canadacentral"
+ALLOWED_ORIGIN = "https://petit-a-petit-francais.github.io, https://petitfrench.parsakp.com"
+
+[[kv_namespaces]]
+binding = "CLIPS"
+id = "REPLACE_WITH_KV_ID"
+
+# logs nothing
+[observability]
+enabled = false
+
+# per visitor: well above normal clicking, low enough that one script can't use up the month's free Azure quota quickly
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "2202"
+simple = { limit = 20, period = 60 }
