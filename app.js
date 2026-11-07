@@ -1060,7 +1060,18 @@
       ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
       <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>Use Apple's button above to sign in.</p>`;
     if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
-    else appleBox = document.getElementById("apple-sign-in-button");
+    else {
+      appleBox = document.getElementById("apple-sign-in-button");
+      // Apple draws its button as a plain div: make it reachable and usable from the keyboard
+      new MutationObserver(() => {
+        const d = appleBox.querySelector(".apple-auth-button:not([role])");
+        if (!d) return;
+        Object.assign(d, { tabIndex: 0, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); d.click(); } } });
+        d.setAttribute("role", "button");
+        d.setAttribute("aria-label", "Sign in with Apple");
+        d.focus();
+      }).observe(appleBox, { childList: true, subtree: true });
+    }
     if (ready.apple === "waiting") document.getElementById("apple-help").hidden = false;
     el.querySelectorAll("[data-signin]").forEach((b) => (b.onclick = () => (b.dataset.signin === "google" ? signInGoogle(b) : signInApple(b))));
     el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => {
