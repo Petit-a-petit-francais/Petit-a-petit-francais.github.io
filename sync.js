@@ -7,7 +7,8 @@
   const canon = (x) => JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((key) => [key, v[key]])) : v));
   const newId = () => Array.from({ length: 16 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
   const epochCmp = (a, b) => a.t - b.t || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const STATUS = { auth: "reconnect", offline: "offline" }; // anything else is retried later too
+  // auth: sign in again; offline: wait for the network; other: the cloud refused (shown with its code), still retried later
+  const STATUS = { auth: "reconnect", offline: "offline", other: "other" };
   const localStore = () => ({
     get: () => { try { return JSON.parse(localStorage.getItem("cahier-fr-sync")); } catch (e) { return null; } },
     set: (v) => { try { localStorage.setItem("cahier-fr-sync", JSON.stringify(v)); } catch (e) { /* blocked */ } },
