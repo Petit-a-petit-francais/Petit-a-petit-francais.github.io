@@ -1,5 +1,10 @@
 # Petit à petit français
 
+[![Live site](https://img.shields.io/badge/site-petitfrench.parsakp.com-2f5bea)](https://petitfrench.parsakp.com/)
+[![Tests](https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/actions/workflows/test.yml/badge.svg)](https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/actions/workflows/test.yml)
+[![Licence: GPL v3+](https://img.shields.io/badge/code-GPL--3.0--or--later-blue)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/Petit-a-petit-francais/Petit-a-petit-francais.github.io)](https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/releases)
+
 A French practice app for A1–A2 learners: lessons, spaced-repetition review, verb drills in 8 tenses, dictation and cheatsheets, with France and Québec voices.
 
 **Use it:** https://petitfrench.parsakp.com/ (the old github.io address forwards there)
@@ -56,6 +61,10 @@ Sync is optional for learners and needs these accounts, set up once:
 4. **Before inviting learners:**
    - Deploy the CloudKit schema to **Production** and set `CK_ENV` to `"production"` in `sync-config.js`.
    - Publish the Google consent screen **In production**. While it's in Testing, Google expires refresh tokens after 7 days, so everyone would have to reconnect weekly.
+
+## Contributing
+
+Content mistakes, bugs and ideas are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report security problems privately as described in [SECURITY.md](SECURITY.md). Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Licence
 

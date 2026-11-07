@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea to discuss
+    url: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/discussions
+    about: Ask how something works or talk through an idea.
+  - name: Security problem
+    url: https://github.com/Petit-a-petit-francais/Petit-a-petit-francais.github.io/security/advisories/new
+    about: Report it privately, not as a public issue.
