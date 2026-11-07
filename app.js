@@ -1028,10 +1028,14 @@
     if (win && !win.closed) window.open = (url) => { win.location.href = url; win.focus(); return win; };
     try { return fn(); } finally { window.open = open; }
   }
-  // the learner closed the window without signing in: reset the button
-  function watchClosed(win, done, onClose) {
+  // the learner closed the window without signing in: reset the button. The window also closes itself after a
+  // successful sign-in, a moment before the sign-in finishes here, so wait a little before calling it cancelled.
+  function watchClosed(win, done, onClose, grace = 8000) {
     if (!win) return;
-    const t = setInterval(() => { if (win.closed) { clearInterval(t); if (!done()) onClose(); } }, 500);
+    const t = setInterval(() => {
+      if (done()) return clearInterval(t);
+      if (win.closed) { clearInterval(t); setTimeout(() => { if (!done()) onClose(); }, grace); }
+    }, 500);
   }
   const waitFor = (find, ms = 20000) => new Promise((resolve) => {
     const t0 = Date.now(), t = setInterval(() => { const el = find(); if (el || Date.now() - t0 > ms) { clearInterval(t); resolve(el || null); } }, 50);
@@ -1041,8 +1045,7 @@
     const win = openPopup();
     let finished = false;
     btn.disabled = true;
-    btn.textContent = "Opening Google…";
-    watchClosed(win, () => finished, () => { finished = true; signInFailed("google", { code: "cancelled" }); });
+    btn.textContent = "Opening Google…"; // Google's script reports a window closed without signing in (popup_closed)
     providerModule("google").then((M) => M.load())
       .then(() => intoPopup(win, () => window.SyncGoogle.signIn()))
       .then((p) => { finished = true; return linkAccount(p, !accts.google); })
