@@ -57,7 +57,7 @@ The first checks the conjugation engine, grading, the scheduler, saved-progress 
 
 The natural voices must never cost anything, so every piece stays on a free tier that refuses requests past its limit instead of billing. When a limit is hit, the app uses the device voice.
 
-1. **Azure:** one Speech resource on the **Free (F0)** pricing tier (never Standard S0). Put its region in `voice/wrangler.toml`.
+1. **Azure:** one Speech resource on the **Free (F0)** pricing tier (never Standard S0). Put its region in `voice/wrangler.toml`. Azure for Students only allows a few regions; this one is in France Central.
 2. **Cloudflare:** the account stays on **Workers Free**. Use Workers KV for the clips, never R2.
 3. **Deploy:** `cd voice && npx wrangler kv namespace create CLIPS`, put the id in `wrangler.toml`, then `npx wrangler deploy` and `npx wrangler secret put AZURE_SPEECH_KEY`. The key is never committed. The Worker's URL is in `app.js` (`VOICE_URL`) and in the `connect-src` of the security rule in `index.html`.
 
