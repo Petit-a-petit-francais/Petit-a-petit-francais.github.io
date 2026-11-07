@@ -58,7 +58,8 @@
   function replaceState(next, why) {
     const prev = S;
     ls.set(BACKUP, stored(S));
-    ls.set(REPLACED, (seenReplace = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`));
+    // a sync result is safe to merge in other tabs; an erase, import or "cloud only" must be adopted as is
+    if (why !== "sync") ls.set(REPLACED, (seenReplace = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`));
     S = next;
     S.log = Core.sumLogs(S.logs);
     const ok = save();
@@ -869,7 +870,7 @@
       }
     };
     const eraseHere = () => {
-      replaceState(Core.emptyState(DEFAULTS, S.epoch), "erase"); // backs up first
+      if (!replaceState(Core.emptyState(DEFAULTS, S.epoch), "erase")) return msg("Couldn't save on this device, so nothing was erased."); // backs up first
       retireV1();
       msg("All progress erased.");
     };
