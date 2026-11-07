@@ -201,9 +201,14 @@
   const player = new Audio();
   let speakId = 0, onlineOffUntil = 0;
   // Safari only lets audio start from a tap; playing silence on the first tap unlocks the shared player for later plays
-  const unlock = () => { player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; player.play().catch(() => {}); };
-  addEventListener("pointerdown", unlock, { once: true, capture: true });
-  addEventListener("keydown", unlock, { once: true, capture: true });
+  const unlock = () => {
+    removeEventListener("pointerdown", unlock, true);
+    removeEventListener("keydown", unlock, true);
+    player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+    player.play().catch(() => {});
+  };
+  addEventListener("pointerdown", unlock, true);
+  addEventListener("keydown", unlock, true);
   function stopSpeech() {
     speakId++;
     player.pause();
