@@ -545,8 +545,10 @@
     return `<div class="meter" role="img" aria-label="${m} mastered, ${s} in progress, of ${pool.length}"><i class="m" style="width:${(m / n) * 100}%"></i><i class="s" style="width:${(s / n) * 100}%"></i></div>`;
   }
   // one topic row in a practice list: French name, English gloss if any, cards seen, mastery meter
-  const tile = (href, title, pool, sub = "") =>
-    `<a class="topic" href="${href}"><b lang="fr">${esc(title)}</b><span class="tiny" aria-label="${pool.filter((it) => S.srs[it.id]).length} of ${pool.length} seen">${pool.filter((it) => S.srs[it.id]).length} / ${pool.length}</span>${sub ? `<span class="tiny sub">${esc(sub)}</span>` : ""}${meter(pool)}</a>`;
+  const tile = (href, title, pool, sub = "", lang = "fr") => {
+    const seen = pool.filter((it) => S.srs[it.id]).length;
+    return `<a class="topic" href="${href}"><b lang="${lang}">${esc(title)}</b><span class="tiny"><span aria-hidden="true">${seen} / ${pool.length}</span><span class="sr-only">${seen} of ${pool.length} seen</span></span>${sub ? `<span class="tiny sub">${esc(sub)}</span>` : ""}${meter(pool)}</a>`;
+  };
   const fillHtml = (s) => Core.parseCloze(s).map((p) => (typeof p === "string" ? esc(p) : `<b>${esc(p.answers[0])}</b>`)).join("");
   const plain = (s) => Core.fillCloze(s);
 
@@ -724,7 +726,7 @@
       </div>
       <nav class="jump" aria-label="Topics"><a href="#/practice#verbs">Verbs</a><a href="#/practice#grammar">Grammar</a><a href="#/practice#vocab">Vocabulary</a></nav>
       ${section("verbs", "Verbs by tense", `#/drill?k=conj&t=${S.settings.tenses.join(",")}`, "All tenses mixed", TENSE_ORDER.filter((t) => S.settings.tenses.includes(t)).map((t) => tile(`#/drill?k=conj&t=${t}`, topicName(TENSES[t]), ITEMS.filter((it) => it.type === "conj" && it.tense === t), TENSE_EN[t].toLowerCase() === TENSES[t] ? "" : TENSE_EN[t])).join(""))}
-      ${section("grammar", "Grammar", "#/drill?k=type&g=cloze", "All grammar mixed", GRAMMAR_TOPICS.map((t) => tile(`#/drill?k=topic&g=${encodeURIComponent(t)}`, topicName(t), ITEMS.filter((it) => it.type === "cloze" && it.group === t))).join(""))}
+      ${section("grammar", "Grammar", "#/drill?k=type&g=cloze", "All grammar mixed", GRAMMAR_TOPICS.map((t) => tile(`#/drill?k=topic&g=${encodeURIComponent(t)}`, topicName(t), ITEMS.filter((it) => it.type === "cloze" && it.group === t), "", t === "examen" ? "en" : "fr")).join(""))}
       ${section("vocab", "Vocabulary", "#/drill?k=type&g=vocab", "All vocabulary mixed", THEMES.map((t) => tile(`#/drill?k=theme&g=${encodeURIComponent(t)}`, t, ITEMS.filter((it) => it.type === "vocab" && it.group === t))).join(""))}</div>`;
   }
 
@@ -821,14 +823,14 @@
       <div class="card">
         <div class="field"><label for="newPerDay">New cards per day<span class="tiny">How many unseen cards join your review each day</span></label><input type="number" id="newPerDay" min="0" max="100" value="${st.newPerDay}" style="width:96px"></div>
         <div class="field"><label for="sessionSize">Cards per session<span class="tiny">Also your daily goal</span></label><input type="number" id="sessionSize" min="5" max="100" value="${st.sessionSize}" style="width:96px"></div>
-        <fieldset class="field col" style="margin:0;border-left:0;border-right:0;border-top:0;padding-inline:0"><legend class="sr-only">Tenses you're studying</legend><span aria-hidden="true">Tenses you're studying<span class="tiny">Verb drills and your review only use these</span></span>
+        <fieldset class="field col"><legend class="sr-only">Tenses you're studying</legend><span aria-hidden="true">Tenses you're studying<span class="tiny">Verb drills and your review only use these</span></span>
           <div class="checks">${TENSE_ORDER.map((t) => `<label class="check" lang="fr"><input type="checkbox" data-tense="${t}" ${st.tenses.includes(t) ? "checked" : ""}>${esc(TENSES[t])}</label>`).join("")}</div></fieldset>
         <div class="field"><span id="theme-l">Theme</span><span class="seg" role="radiogroup" aria-labelledby="theme-l">${[["auto", "Match system"], ["light", "Light"], ["dark", "Dark"]].map(([v, l]) => `<label><input type="radio" name="theme" value="${v}" ${st.theme === v ? "checked" : ""}>${l}</label>`).join("")}</span></div>
       </div>
       <h2>Audio</h2>
       <div class="card">
         <div class="field"><label for="accent">Main accent<span class="tiny">Used everywhere. The other one is a second button next to answers, examples and dictation.</span></label><select id="accent">${Object.entries(ACCENTS).map(([k, a]) => `<option value="${k}" ${st.accent === k ? "selected" : ""}>${a.name}</option>`).join("")}</select></div>
-        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span style="display:flex;gap:8px"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
+        ${Object.entries(ACCENTS).map(([k, a]) => `<div class="field"><label for="${a.key}">${a.name} voice</label><span class="voice-pick"><select id="${a.key}"><option value="">Best available${voiceFor(k) ? ` (${esc(voiceFor(k).name)})` : ""}</option>${voicesFor(k).map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === st[a.key] ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select><button class="btn" type="button" data-test="${k}">Test</button></span></div>`).join("")}
         <div class="field"><label for="rate">Speed</label><input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="${st.rate}"></div>
         <div class="field"><label for="autoplay">Read the answer aloud after each question</label><input type="checkbox" id="autoplay" ${st.autoplay ? "checked" : ""} style="width:22px;height:22px"></div>
         <p class="tiny" style="margin:8px 0 0">${!voices.length ? "No French voice found on this device, so audio may be silent or read with an English accent. " : !voicesFor("qc").length ? "No Québec voice found. " : ""}${voiceHelp()}</p>
