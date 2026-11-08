@@ -7,7 +7,6 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Fixed
 
 - On iPhone and iPad, opening the app or hearing a phrase no longer pauses music playing in another app. The app's sound now mixes with it, and follows the silent switch (#49).
-- The natural voice is louder (2.5x gain with a limiter), so it can be heard over music (#49).
 
 ## [1.1.0] - 2026-11-07
 
