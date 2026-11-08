@@ -1115,8 +1115,8 @@
     btn.disabled = true;
     btn.textContent = "Opening Apple…";
     ready.apple = "waiting";
-    if (win) appleBox.hidden = true;
-    const reset = () => { ready.apple = false; appleBox.hidden = false; appleBox.replaceChildren(); };
+    if (!win) appleBox.hidden = false; // no window of ours: the learner taps Apple's button
+    const reset = () => { ready.apple = false; appleBox.hidden = true; appleBox.replaceChildren(); };
     watchClosed(win, () => finished, () => { finished = true; reset(); signInFailed("apple", { code: "cancelled" }); });
     providerModule("apple").then(async (M) => {
       const done = M.signIn();
@@ -1173,6 +1173,7 @@
     if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
     else {
       appleBox = document.getElementById("apple-sign-in-button");
+      appleBox.hidden = true; // CloudKit also draws its button when a remembered session has ended; only show it to sign in
       // Apple draws its button as a plain div: make it reachable and usable from the keyboard
       new MutationObserver(() => {
         const d = appleBox.querySelector(".apple-auth-button:not([role])");
