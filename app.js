@@ -200,6 +200,8 @@
   const NATURAL = { fr: "Denise", qc: "Sylvie" };
   const player = new Audio();
   let speakId = 0, onlineOffUntil = 0;
+  // iOS Safari: "ambient" mixes with other apps' audio instead of pausing their music (needs Safari 16.4+; it follows the silent switch)
+  try { navigator.audioSession.type = "ambient"; } catch {}
   // Safari only lets audio start from a tap; playing silence on the first tap unlocks the shared player for later plays
   const unlock = () => {
     removeEventListener("pointerdown", unlock, true);

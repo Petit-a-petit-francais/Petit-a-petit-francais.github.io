@@ -4,6 +4,10 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- On iPhone and iPad, opening the app or hearing a phrase no longer pauses music playing in another app. The app's sound now mixes with it, and follows the silent switch (#49).
+
 ## [1.1.0] - 2026-11-07
 
 ### Added
