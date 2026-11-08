@@ -120,7 +120,16 @@
       root.document.head.append(s);
     }));
   }
-  const container = () => root.CloudKit.getDefaultContainer();
+  // CloudKit checks who's signed in on its own too (inside setUpAuth, after Apple's window, and 14 minutes after showing
+  // its button), spending the token outside our calls: route that check through serial() as well
+  const container = () => {
+    const c = root.CloudKit.getDefaultContainer();
+    if (!c.petitfrenchSerial) {
+      const who = c.fetchCurrentUserIdentity.bind(c);
+      Object.assign(c, { fetchCurrentUserIdentity: () => serial(who), petitfrenchSerial: true });
+    }
+    return c;
+  };
   // Apple's own button (rendered into #apple-sign-in-button) opens the sign-in window; this resolves once it's done.
   async function signIn() {
     await load();
@@ -128,7 +137,7 @@
     // setUpAuth fail instead of showing Apple's sign-in button
     const c = container();
     let user;
-    try { user = await serial(() => (ls.del(KEY), c.setUpAuth())); } catch (e) { throw mapError(e); }
+    try { await serial(() => ls.del(KEY)); user = await c.setUpAuth(); } catch (e) { throw mapError(e); }
     if (!user) user = await c.whenUserSignsIn();
     return provider(c);
   }
@@ -137,7 +146,7 @@
     await load();
     const c = container();
     let user = null;
-    try { user = await serial(() => c.setUpAuth()); } catch (e) { throw mapError(e); }
+    try { user = await c.setUpAuth(); } catch (e) { throw mapError(e); }
     return user ? provider(c) : null;
   }
 

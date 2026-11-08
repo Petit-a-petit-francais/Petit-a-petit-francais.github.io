@@ -559,7 +559,10 @@ console.log("ok — google provider");
   };
   // CloudKit tokens are single-use: a dead one in the store makes setUpAuth fail outright
   // whenUserSignsIn: Apple's popup stores the new session token through our token store
-  const container = { privateCloudDatabase: db, setUpAuth: async () => { if (store["cahier-fr-ck"] === "dead") throw { ckErrorCode: "AUTHENTICATION_FAILED" }; return signedIn ? { userRecordName: "_u" } : null; }, whenUserSignsIn: async () => ((signedIn = true), (store["cahier-fr-ck"] = "fresh"), { userRecordName: "_u" }), signOut: () => signOuts++ };
+  // like CloudKit, setUpAuth asks fetchCurrentUserIdentity on the container
+  let whoCalls = 0;
+  const container = { privateCloudDatabase: db, async fetchCurrentUserIdentity() { whoCalls++; if (store["cahier-fr-ck"] === "dead") throw { ckErrorCode: "AUTHENTICATION_FAILED" }; return signedIn ? { userRecordName: "_u" } : null; },
+    setUpAuth() { return this.fetchCurrentUserIdentity(); }, whenUserSignsIn: async () => ((signedIn = true), (store["cahier-fr-ck"] = "fresh"), { userRecordName: "_u" }), signOut: () => signOuts++ };
   g.CloudKit = { configure: (c) => (g.ckConfig = c), getDefaultContainer: () => container };
   vm.createContext(g);
   for (const f of ["sync-config.js", "sync-apple.js"]) if (existsSync(here(f))) vm.runInContext(readFileSync(here(f), "utf8"), g);
@@ -615,6 +618,13 @@ console.log("ok — google provider");
   db.fetchRecords = async (n) => { inFlight++; most = Math.max(most, inFlight); await new Promise((r) => setTimeout(r, 5)); try { return await realFetch(n); } finally { inFlight--; } };
   await Promise.all([p.pull(), p.pull(), p.push('{"q":1}', [(await p.pull()).copies[0]?.ref])].map((x) => x.catch(() => {})));
   assert.equal(most, 1, "CloudKit calls overlapped");
+  // CloudKit's own identity check (e.g. its 14-minute re-check) waits for our calls too
+  const order = [];
+  db.fetchRecords = async (n) => { order.push("start"); await new Promise((r) => setTimeout(r, 5)); order.push("end"); return realFetch(n); };
+  const before = whoCalls;
+  await Promise.all([p.pull(), container.fetchCurrentUserIdentity().then(() => order.push("who"))]);
+  assert.deepEqual(order, ["start", "end", "who"], "CloudKit's identity check overlapped a call");
+  assert.equal(whoCalls, before + 1);
   db.fetchRecords = realFetch;
   // reconnect after the stored token died (expired, or used twice): clear it so Apple shows its sign-in button
   store["cahier-fr-ck"] = "dead"; signedIn = false;
