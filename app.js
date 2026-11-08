@@ -199,7 +199,7 @@
   const VOICE_URL = "https://petitfrench-voice.token-helper.workers.dev/tts";
   const NATURAL = { fr: "Denise", qc: "Sylvie" };
   const player = new Audio();
-  let speakId = 0, onlineOffUntil = 0;
+  let speakId = 0, onlineOffUntil = 0, boost;
   // iOS Safari: "ambient" mixes with other apps' audio instead of pausing their music (needs Safari 16.4+; it follows the silent switch)
   try { navigator.audioSession.type = "ambient"; } catch {}
   // Safari only lets audio start from a tap; playing silence on the first tap unlocks the shared player for later plays
@@ -208,6 +208,16 @@
     removeEventListener("keydown", unlock, true);
     player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
     player.play().catch(() => {});
+    // HTML audio tops out at volume 1, quiet next to music: route the player through a gain stage (only once the context is really running, or the player would go silent)
+    try {
+      boost = new (window.AudioContext || window.webkitAudioContext)();
+      boost.resume().then(() => {
+        if (boost.state !== "running") return;
+        const gain = boost.createGain();
+        gain.gain.value = 2.5;
+        boost.createMediaElementSource(player).connect(gain).connect(boost.createDynamicsCompressor()).connect(boost.destination);
+      }).catch(() => {});
+    } catch {}
   };
   addEventListener("pointerdown", unlock, true);
   addEventListener("keydown", unlock, true);
@@ -236,6 +246,7 @@
         URL.revokeObjectURL(player.src);
         player.src = URL.createObjectURL(blob);
         player.defaultPlaybackRate = player.playbackRate = rate; // loading a new src resets playbackRate to the default
+        if (boost?.state === "suspended" || boost?.state === "interrupted") boost.resume().catch(() => {}); // iOS suspends it after a call or backgrounding
         await player.play();
         return;
       } catch (e) {
