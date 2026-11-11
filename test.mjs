@@ -537,7 +537,9 @@ console.log("ok — google provider");
 {
   const recs = {}, assets = {}, store = {};
   let tag = 1, failNext = null, signedIn = false, signOuts = 0;
+  let ticks = [];
   const g = { console, setTimeout, clearTimeout, Promise, Blob, TextEncoder, JSON,
+    setInterval: (fn, ms) => ticks.push({ fn, ms }) - 1, clearInterval: (i) => { if (ticks[i]) ticks[i].fn = null; },
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = String(v)), removeItem: (k) => delete store[k] } };
   g.window = g;
   g.fetch = async (url) => { if (!assets[url]) throw new TypeError("Failed to fetch"); return { ok: true, status: 200, text: async () => assets[url] }; };
@@ -626,6 +628,14 @@ console.log("ok — google provider");
   assert.deepEqual(order, ["start", "end", "who"], "CloudKit's identity check overlapped a call");
   assert.equal(whoCalls, before + 1);
   db.fetchRecords = realFetch;
+  // keep-alive: one live 20-minute timer that spends the token through serial(), and none after sign-out
+  const live = () => ticks.filter((t) => t.fn);
+  assert.equal(live().length, 1, "one keep-alive timer per page");
+  assert.equal(live()[0].ms, 20 * 60 * 1000);
+  const w0 = whoCalls;
+  live()[0].fn();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(whoCalls, w0 + 1, "keep-alive asks who's signed in");
   // reconnect after the stored token died (expired, or used twice): clear it so Apple shows its sign-in button
   store["cahier-fr-ck"] = "dead"; signedIn = false;
   assert.equal(await code(() => SA.restore()), "auth", "a dead token means reconnect");
@@ -637,6 +647,7 @@ console.log("ok — google provider");
   await p.signOut();
   assert.equal(store["cahier-fr-ck"], undefined);
   assert.equal(signOuts, 1);
+  assert.equal(live().length, 0, "keep-alive stops on sign-out");
 }
 console.log("ok — apple provider");
 

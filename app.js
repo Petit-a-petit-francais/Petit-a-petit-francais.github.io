@@ -1171,7 +1171,7 @@
       : "Progress is saved in this browser only. Sign in to keep it on all your devices, stored in your own Google Drive or iCloud. Or export a backup now and then."} <a href="privacy.html">Privacy policy</a></p>
       ${linked.map(acct).join("")}
       ${free.length ? `<div class="sync-signin">${free.map(signIn).join("")}</div>` : ""}
-      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>In Apple's sign-in window, tick <b>Keep me signed in</b>: otherwise Apple ends the session after 30 minutes. If no window opened, use Apple's button above. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
+      <div id="apple-sign-in-button"></div><p class="tiny" id="apple-help" hidden>In Apple's sign-in window, tick <b>Keep me signed in</b>: otherwise Apple ends the session 30 minutes after you last used the app. If Safari jumps straight to Touch ID or Face ID, cancel that prompt to reach Apple's form with the tick box, then sign in there. If no window opened, use Apple's button above. If Apple says "iCloud Data Web Access is Off", turn on Settings → your name → iCloud → Access iCloud Data on the Web on your iPhone, iPad or Mac, then try again. Or sign in with Google instead.</p>`;
     if (appleBox) document.getElementById("apple-sign-in-button").replaceWith(appleBox);
     else {
       appleBox = document.getElementById("apple-sign-in-button");
