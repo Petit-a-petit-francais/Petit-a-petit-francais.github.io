@@ -859,10 +859,10 @@ DATA.verbs.push(
   ["augmenter", "to increase", "augmente augmentes augmente augmentons augmentez augmentent", "augmenté", "a"],
 );
 DATA.cloze.push(
-  ["articles", "Je voudrais une tarte [à la](à + la fraise) fraise, s'il vous plaît.", "I'd like a strawberry tart, please."],
-  ["articles", "Mon dessert préféré, c'est le gâteau [au](à + le chocolat) chocolat.", "My favourite dessert is chocolate cake."],
-  ["articles", "Une glace [à la](à + la vanille) vanille et un café [au](à + le lait) lait.", "A vanilla ice cream and a coffee with milk."],
-  ["articles", "J'adore boire du thé [à la](à + la cannelle) cannelle.", "I love drinking cinnamon tea."],
+  ["articles", "Je voudrais une tarte [à la](à + article) fraise, s'il vous plaît.", "I'd like a strawberry tart, please."],
+  ["articles", "Mon dessert préféré, c'est le gâteau [au](à + article) chocolat.", "My favourite dessert is chocolate cake."],
+  ["articles", "Une glace [à la](à + article) vanille et un café [au](à + article) lait.", "A vanilla ice cream and a coffee with milk."],
+  ["articles", "J'adore boire du thé [à la](à + article) cannelle.", "I love drinking cinnamon tea."],
   ["articles", "J'ai acheté un pot [de](quantity) confiture et deux bouteilles [d'](quantity) eau.", "I bought a jar of jam and two bottles of water."],
   ["articles", "Donnez-moi quatre tranches [de](quantity) jambon et un morceau [de](quantity) fromage.", "Give me four slices of ham and a piece of cheese."],
   ["articles", "Il me faut un paquet [de](quantity) farine et [du](partitif) sucre.", "I need a packet of flour and some sugar."],
