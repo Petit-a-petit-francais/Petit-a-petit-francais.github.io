@@ -59,7 +59,7 @@ DATA.vocab.push(
   ["l'heure","hour (f); time of day","Le temps"],
   ["midi","noon","Le temps"],
   ["minuit","midnight","Le temps"],
-  ["le quart","quarter (of an hour)","Le temps"],
+  ["le quart","quarter (¼; also of an hour)","Le temps"],
   ["demi","half (m)","Le temps"],
   ["le décalage horaire","time difference","Le temps"],
   ["les horaires","schedule, timetable","Le temps"],
@@ -2502,4 +2502,21 @@ DATA.vocab.push(
   ["stressant", "stressful", "Les adjectifs"], ["tropical", "tropical (m pl: tropicaux)", "La nature"], ["consécutif", "consecutive (f: consécutive)", "Les adjectifs"],
   ["à l'ancienne", "old-style, vintage", "Expressions"], ["à la place", "instead", "Les mots utiles"], ["particulièrement", "particularly", "Les mots utiles"],
   ["streamer", "to stream (online)", "Les arts et les médias"],
+);
+
+// Shops, quantities and recipes (sessions 17–18).
+DATA.vocab.push(
+  ["sucré", "sweet, sugary", "Commerces et nourriture"], ["succulent", "delicious, juicy", "Commerces et nourriture"], ["croître", "to grow, to increase (= augmenter)", "Verbes utiles"],
+  ["augmenter", "to increase, to rise", "Verbes utiles"], ["croissant", "growing, increasing (adj)", "Les adjectifs"], ["décroissant", "decreasing, falling", "Les adjectifs"],
+  ["le taux", "rate (le taux de chômage)", "L'argent et les services"], ["le café au lait", "coffee with milk", "Commerces et nourriture"], ["le café latté", "latte", "Commerces et nourriture"],
+  ["le marchand de fruits et légumes", "greengrocer", "Commerces et nourriture"], ["le marchand de vin", "wine merchant", "Commerces et nourriture"], ["le caviste", "wine merchant (= marchand de vin)", "Commerces et nourriture"],
+  ["le pot de fleurs", "flowerpot", "Logement et ville"], ["être un pot de colle", "to be clingy (lit. a pot of glue)", "Expressions"], ["la livre sterling", "pound sterling", "L'argent et les services"],
+  ["le tiers", "third (⅓)", "Les nombres"], ["l'agent d'accueil", "receptionist (m or f)", "Les métiers"], ["le jaune d'œuf", "egg yolk", "Commerces et nourriture"],
+  ["le blanc d'œuf", "egg white", "Commerces et nourriture"], ["bien cuit", "well done (meat)", "Commerces et nourriture"], ["à point", "medium (meat)", "Commerces et nourriture"],
+  ["saignant", "medium rare (meat)", "Commerces et nourriture"], ["un steak bleu", "a rare steak", "Commerces et nourriture"], ["la cannelle", "cinnamon", "Commerces et nourriture"],
+  ["le tartare", "tartare (raw chopped meat or fish)", "Commerces et nourriture"], ["la noix", "walnut, nut", "Commerces et nourriture"], ["fondre", "to melt", "Verbes utiles"],
+  ["le safran", "saffron", "Commerces et nourriture"], ["la viande hachée", "minced meat, ground meat", "Commerces et nourriture"], ["râper", "to grate", "Verbes utiles"],
+  ["griller", "to grill, to toast", "Verbes utiles"], ["bouillir", "to boil", "Verbes utiles"], ["le gratin", "gratin (baked dish with a crust)", "Commerces et nourriture"],
+  ["gratiné", "au gratin, with a golden crust", "Commerces et nourriture"], ["le concentré de tomate", "tomato paste", "Commerces et nourriture"], ["laisser reposer", "to let rest, to let stand", "Commerces et nourriture"],
+  ["le poulet rôti", "roast chicken", "Commerces et nourriture"], ["croustillant", "crispy, crunchy", "Les adjectifs"], ["voir le jour", "to come into being, to open (lit. to see the day)", "Expressions"],
 );
