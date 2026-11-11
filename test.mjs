@@ -628,14 +628,17 @@ console.log("ok — google provider");
   assert.deepEqual(order, ["start", "end", "who"], "CloudKit's identity check overlapped a call");
   assert.equal(whoCalls, before + 1);
   db.fetchRecords = realFetch;
-  // keep-alive: one live 20-minute timer that spends the token through serial(), and none after sign-out
+  // keep-alive: one live 20-minute timer that makes a real request through serial(), and none after sign-out
   const live = () => ticks.filter((t) => t.fn);
   assert.equal(live().length, 1, "one keep-alive timer per page");
   assert.equal(live()[0].ms, 20 * 60 * 1000);
-  const w0 = whoCalls;
+  const asked = [];
+  db.fetchRecords = async (n) => (asked.push(...n), realFetch(n));
   live()[0].fn();
-  await new Promise((r) => setTimeout(r, 0));
-  assert.equal(whoCalls, w0 + 1, "keep-alive asks who's signed in");
+  await new Promise((r) => setTimeout(r, 10));
+  db.fetchRecords = realFetch;
+  assert.deepEqual(asked, ["keep-alive"], "keep-alive makes one real CloudKit request");
+  assert.ok(!recs["keep-alive"], "keep-alive writes nothing");
   // reconnect after the stored token died (expired, or used twice): clear it so Apple shows its sign-in button
   store["cahier-fr-ck"] = "dead"; signedIn = false;
   assert.equal(await code(() => SA.restore()), "auth", "a dead token means reconnect");

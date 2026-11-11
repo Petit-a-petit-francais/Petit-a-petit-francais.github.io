@@ -52,12 +52,13 @@
   }
 
   // A CloudKit web session ends 30 minutes after its last token was issued (2 weeks with "Keep me signed in"), and every
-  // request issues a new token, so a cheap identity check every 20 minutes keeps the session going while the app is open.
+  // request issues a new token, so a lookup of a record that doesn't exist (always a real request, nothing downloaded)
+  // every 20 minutes keeps the session going while the app is open. Tab-visible and back-online syncs refresh it too.
   // shortcut: only while a tab is open; a browser closed for 30+ minutes still needs one Reconnect (Apple's limit).
   let alive = null;
   const keepAlive = (c) => {
     root.clearInterval(alive);
-    alive = root.setInterval(() => { if (ls.get(KEY)) c.fetchCurrentUserIdentity().catch(() => {}); }, 20 * 60 * 1000);
+    alive = root.setInterval(() => { if (ls.get(KEY)) ck(() => c.privateCloudDatabase.fetchRecords(["keep-alive"])).catch(() => {}); }, 20 * 60 * 1000);
   };
 
   function provider(container) {
