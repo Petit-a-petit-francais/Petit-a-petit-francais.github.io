@@ -846,3 +846,42 @@ DATA.cloze.push(
 );
 DATA.fiches.find((f) => f.id === "fut").html += `<p><b>Talking about wishes:</b> <i>j'aimerais, je voudrais, je souhaiterais, j'adorerais, je préférerais</i> + infinitive: <i>J'aimerais voyager partout dans le monde.</i> With a different subject, use <b>que + subjonctif</b>: <i>J'aimerais que ma chaîne <b>devienne</b> populaire. Je souhaiterais que tout le monde <b>puisse</b> réaliser ses rêves.</i></p>
 <p>Watch the verb's preposition: <i>rendre visite <b>à</b> quelqu'un</i> (a person) but <i>visiter</i> + place; <i>apprendre <b>à</b> danser</i>; <i>plusieurs</i> never takes an -e.</p>`;
+
+// Shops, quantities and recipes (sessions 17–18).
+DATA.verbs.push(
+  ["croître", "to grow, to increase", "croîs croîs croît croissons croissez croissent", "crû", "a"],
+  ["fondre", "to melt", "fonds fonds fond fondons fondez fondent", "fondu", "a"],
+  ["bouillir", "to boil", "bous bous bout bouillons bouillez bouillent", "bouilli", "a"],
+  ["cuire", "to cook", "cuis cuis cuit cuisons cuisez cuisent", "cuit", "a"],
+  ["râper", "to grate", "râpe râpes râpe râpons râpez râpent", "râpé", "a"],
+  ["griller", "to grill, to toast", "grille grilles grille grillons grillez grillent", "grillé", "a"],
+  ["couper", "to cut", "coupe coupes coupe coupons coupez coupent", "coupé", "a"],
+  ["augmenter", "to increase", "augmente augmentes augmente augmentons augmentez augmentent", "augmenté", "a"],
+);
+DATA.cloze.push(
+  ["articles", "Je voudrais une tarte [à la](à + article) fraise, s'il vous plaît.", "I'd like a strawberry tart, please."],
+  ["articles", "Mon dessert préféré, c'est le gâteau [au](à + article) chocolat.", "My favourite dessert is chocolate cake."],
+  ["articles", "Une glace [à la](à + article) vanille et un café [au](à + article) lait.", "A vanilla ice cream and a coffee with milk."],
+  ["articles", "J'adore boire du thé [à la](à + article) cannelle.", "I love drinking cinnamon tea."],
+  ["articles", "J'ai acheté un pot [de](quantity) confiture et deux bouteilles [d'](quantity) eau.", "I bought a jar of jam and two bottles of water."],
+  ["articles", "Donnez-moi quatre tranches [de](quantity) jambon et un morceau [de](quantity) fromage.", "Give me four slices of ham and a piece of cheese."],
+  ["articles", "Il me faut un paquet [de](quantity) farine et [du](partitif) sucre.", "I need a packet of flour and some sugar."],
+  ["prépositions", "J'achète le pain [chez](person) le boulanger.", "I buy bread at the baker's."],
+  ["prépositions", "On trouve du jambon [à la](place) charcuterie.", "You find ham at the delicatessen."],
+  ["prépositions", "J'achète la viande [chez le](person) boucher ou [à la](place) boucherie.", "I buy meat at the butcher's."],
+  ["constructions utiles", "Un Canadien [sur](out of) trois parle français.", "One Canadian in three speaks French."],
+  ["constructions utiles", "J'ai mangé [la moitié](½) du gâteau.", "I ate half the cake."],
+  ["constructions utiles", "Le [tiers](⅓) des étudiants habitent chez leurs parents.", "A third of the students live with their parents."],
+  ["constructions utiles", "Le taux [croissant](which is growing) des loyers inquiète les Canadiens.", "The rising rate of rents worries Canadians."],
+  ["impératif", "D'abord, [épluchez](éplucher, vous) les pommes de terre.", "First, peel the potatoes."],
+  ["impératif", "[Coupez](couper, vous) l'oignon et [ajoutez](ajouter, vous) la viande hachée.", "Cut the onion and add the minced meat."],
+  ["impératif", "[Faites](faire, vous) fondre le beurre dans une poêle.", "Melt the butter in a frying pan."],
+  ["impératif", "[Mélangez](mélanger, vous) les jaunes d'œufs avec le sucre.", "Mix the egg yolks with the sugar."],
+  ["impératif", "Enfin, [laissez](laisser, vous) reposer quelques minutes avant de servir.", "Finally, let it rest for a few minutes before serving."],
+  ["présent", "L'eau [bout](bouillir) à cent degrés.", "Water boils at a hundred degrees."],
+  ["présent", "Le chocolat [fond](fondre) très vite au soleil.", "Chocolate melts very quickly in the sun."],
+  ["genre et nombre", "La peau du poulet rôti est très [croustillante](croustillant, f).", "The roast chicken's skin is very crispy."],
+);
+DATA.fiches.find((f) => f.id === "articles").html += `<p><b>Flavours:</b> à + the flavour with its article: <i>une tarte <b>à la</b> fraise, une glace <b>à la</b> vanille, un gâteau <b>au</b> chocolat, un café <b>au</b> lait</i>.</p>
+<p><b>Containers and amounts</b> take <b>de / d'</b>: <i>un pot de miel, une bouteille d'eau, un paquet de riz, un morceau de fromage, une tranche de jambon</i>. Fractions: <i>la moitié</i> (½), <i>le tiers</i> (⅓), <i>le quart</i> (¼), <i>trois sur cinq</i> (3/5), <i>un Canadien sur trois</i>.</p>`;
+DATA.fiches.find((f) => f.id === "impe").html += `<p><b>Recipes</b> use the vous imperative: <i>Épluchez, coupez, râpez, mélangez, ajoutez, faites cuire / bouillir / fondre / griller. Enfin, laissez reposer avant de servir.</i> Meat: <i>bien cuit</i> (well done), <i>à point</i> (medium), <i>saignant</i> (medium rare), <i>bleu</i> (rare).</p>`;
