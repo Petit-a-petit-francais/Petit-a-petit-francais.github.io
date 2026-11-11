@@ -7,6 +7,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Fixed
 
 - On iPhone and iPad, opening the app or hearing a phrase no longer pauses music playing in another app. The app's sound now mixes with it, and follows the silent switch (#49).
+- iCloud stays connected while the app is open, instead of signing out 30 minutes after sign-in. The sign-in hint now explains how to reach Apple's **Keep me signed in** box when Safari jumps straight to Touch ID or Face ID (#53).
 
 ## [1.1.0] - 2026-11-07
 
